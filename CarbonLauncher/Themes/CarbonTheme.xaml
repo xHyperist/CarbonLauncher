@@ -1,0 +1,189 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Color x:Key="CarbonBackgroundColor">#0D1220</Color>
+    <Color x:Key="CarbonPanelColor">#121A2E</Color>
+    <Color x:Key="CarbonPanelLightColor">#18233D</Color>
+    <Color x:Key="CarbonPinkColor">#FF4FA3</Color>
+    <Color x:Key="CarbonBlueColor">#4DA6FF</Color>
+    <Color x:Key="CarbonCyanColor">#6EE7FF</Color>
+    <Color x:Key="CarbonTextColor">#FFFFFF</Color>
+    <Color x:Key="CarbonMutedTextColor">#A8B0C2</Color>
+    <Color x:Key="CarbonBorderColor">#26324D</Color>
+
+    <SolidColorBrush x:Key="CarbonBackgroundBrush" Color="{StaticResource CarbonBackgroundColor}" />
+    <SolidColorBrush x:Key="CarbonSidebarBrush" Color="#10172A" />
+    <SolidColorBrush x:Key="CarbonPanelBrush" Color="{StaticResource CarbonPanelColor}" />
+    <SolidColorBrush x:Key="CarbonPanelLightBrush" Color="{StaticResource CarbonPanelLightColor}" />
+    <SolidColorBrush x:Key="CarbonPinkBrush" Color="{StaticResource CarbonPinkColor}" />
+    <SolidColorBrush x:Key="CarbonBlueBrush" Color="{StaticResource CarbonBlueColor}" />
+    <SolidColorBrush x:Key="CarbonCyanBrush" Color="{StaticResource CarbonCyanColor}" />
+    <SolidColorBrush x:Key="CarbonTextBrush" Color="{StaticResource CarbonTextColor}" />
+    <SolidColorBrush x:Key="CarbonMutedTextBrush" Color="{StaticResource CarbonMutedTextColor}" />
+    <SolidColorBrush x:Key="CarbonBorderBrush" Color="{StaticResource CarbonBorderColor}" />
+
+    <Style TargetType="Window">
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="TextElement.Foreground" Value="{StaticResource CarbonTextBrush}" />
+    </Style>
+
+    <Style TargetType="ComboBox">
+        <Setter Property="Height" Value="38" />
+        <Setter Property="Foreground" Value="{StaticResource CarbonTextBrush}" />
+        <Setter Property="Background" Value="{StaticResource CarbonPanelLightBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource CarbonBorderBrush}" />
+        <Setter Property="Padding" Value="10,0" />
+    </Style>
+
+    <Style TargetType="ProgressBar">
+        <Setter Property="Foreground" Value="{StaticResource CarbonCyanBrush}" />
+        <Setter Property="Background" Value="{StaticResource CarbonPanelLightBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource CarbonBorderBrush}" />
+    </Style>
+
+    <Style x:Key="CardTitleTextStyle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource CarbonMutedTextBrush}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style x:Key="CardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource CarbonPanelBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource CarbonBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="22" />
+    </Style>
+
+    <Style x:Key="CompactCardStyle" TargetType="Border" BasedOn="{StaticResource CardStyle}">
+        <Setter Property="Padding" Value="16" />
+    </Style>
+
+    <Style x:Key="AccentCardStyle" TargetType="Border" BasedOn="{StaticResource CardStyle}">
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#1A2745" Offset="0" />
+                    <GradientStop Color="#121A2E" Offset="1" />
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="HeroPanelStyle" TargetType="Border">
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="34" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="{StaticResource CarbonBorderBrush}" />
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#18233D" Offset="0" />
+                    <GradientStop Color="#121A2E" Offset="0.52" />
+                    <GradientStop Color="#261A3A" Offset="1" />
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="SidebarButtonStyle" TargetType="Button">
+        <Setter Property="Height" Value="44" />
+        <Setter Property="Margin" Value="0,0,0,10" />
+        <Setter Property="Padding" Value="16,0" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Foreground" Value="{StaticResource CarbonMutedTextBrush}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="ButtonBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="8">
+                        <ContentPresenter VerticalAlignment="Center"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          Margin="{TemplateBinding Padding}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="#19233C" />
+                            <Setter Property="Foreground" Value="{StaticResource CarbonTextBrush}" />
+                            <Setter Property="BorderBrush" Value="{StaticResource CarbonBlueBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="LaunchButtonStyle" TargetType="Button">
+        <Setter Property="Height" Value="58" />
+        <Setter Property="MinWidth" Value="260" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="Foreground" Value="{StaticResource CarbonTextBrush}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="ButtonBorder"
+                            CornerRadius="8"
+                            Padding="26,0">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="{StaticResource CarbonPinkColor}" Offset="0" />
+                                <GradientStop Color="{StaticResource CarbonBlueColor}" Offset="1" />
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.88" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.72" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="WindowButtonStyle" TargetType="Button">
+        <Setter Property="Width" Value="38" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Margin" Value="4,0,0,0" />
+        <Setter Property="Foreground" Value="{StaticResource CarbonMutedTextBrush}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="ButtonBorder"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="6">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="#1D2945" />
+                            <Setter Property="Foreground" Value="{StaticResource CarbonTextBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

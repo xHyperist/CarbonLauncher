@@ -1,0 +1,284 @@
+<Window x:Class="CarbonLauncher.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Carbon Launcher"
+        Width="1180"
+        Height="720"
+        MinWidth="1040"
+        MinHeight="640"
+        Background="{StaticResource CarbonBackgroundBrush}"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        ResizeMode="CanResizeWithGrip">
+    <Border BorderBrush="{StaticResource CarbonBorderBrush}"
+            BorderThickness="1"
+            Background="{StaticResource CarbonBackgroundBrush}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="260" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0"
+                    Background="{StaticResource CarbonSidebarBrush}"
+                    BorderBrush="{StaticResource CarbonBorderBrush}"
+                    BorderThickness="0,0,1,0">
+                <Grid Margin="24">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="34" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel>
+                        <TextBlock Text="Carbon"
+                                   Foreground="{StaticResource CarbonTextBrush}"
+                                   FontSize="28"
+                                   FontWeight="Bold" />
+                        <TextBlock Text="Launcher v0.1.0"
+                                   Foreground="{StaticResource CarbonMutedTextBrush}"
+                                   FontSize="13"
+                                   Margin="1,4,0,0" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2">
+                        <Button Style="{StaticResource SidebarButtonStyle}" Content="Home / Play" />
+                        <Button Style="{StaticResource SidebarButtonStyle}" Content="Versions" />
+                        <Button Style="{StaticResource SidebarButtonStyle}" Content="Account" />
+                        <Button Style="{StaticResource SidebarButtonStyle}" Content="Settings" />
+                        <Button Style="{StaticResource SidebarButtonStyle}" Content="News" />
+                    </StackPanel>
+
+                    <Border Grid.Row="3"
+                            Style="{StaticResource CompactCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Launcher Status"
+                                       Foreground="{StaticResource CarbonMutedTextBrush}"
+                                       FontSize="12" />
+                            <TextBlock Text="{Binding StatusText}"
+                                       Foreground="{StaticResource CarbonCyanBrush}"
+                                       FontSize="14"
+                                       FontWeight="SemiBold"
+                                       Margin="0,8,0,0" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="58" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0"
+                      Background="{StaticResource CarbonBackgroundBrush}"
+                      MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                                Margin="30,0,0,0">
+                        <Border Width="10"
+                                Height="10"
+                                CornerRadius="5"
+                                Background="{StaticResource CarbonPinkBrush}"
+                                Margin="0,0,10,0" />
+                        <TextBlock Text="Carbon Launcher"
+                                   Foreground="{StaticResource CarbonTextBrush}"
+                                   FontSize="15"
+                                   FontWeight="SemiBold" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                                Margin="0,0,18,0">
+                        <Button Style="{StaticResource WindowButtonStyle}"
+                                Content="_"
+                                Click="Minimize_Click" />
+                        <Button Style="{StaticResource WindowButtonStyle}"
+                                Content="X"
+                                Click="Close_Click" />
+                    </StackPanel>
+                </Grid>
+
+                <Grid Grid.Row="1" Margin="30,18,30,30">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="260" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel>
+                            <TextBlock Text="Play Carbon Client"
+                                       Foreground="{StaticResource CarbonTextBrush}"
+                                       FontSize="34"
+                                       FontWeight="Bold" />
+                            <TextBlock Text="Premium Windows launcher foundation for Carbon Client."
+                                       Foreground="{StaticResource CarbonMutedTextBrush}"
+                                       FontSize="15"
+                                       Margin="0,8,0,0" />
+                        </StackPanel>
+
+                        <Border Grid.Column="1"
+                                Style="{StaticResource AccentCardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Selected Version"
+                                           Foreground="{StaticResource CarbonMutedTextBrush}"
+                                           FontSize="12" />
+                                <ComboBox ItemsSource="{Binding Versions}"
+                                          SelectedItem="{Binding SelectedVersion}"
+                                          DisplayMemberPath="DisplayName"
+                                          Margin="0,10,0,0" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.Row="1" Margin="0,26,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.25*" />
+                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="0.9*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="24" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0"
+                                Grid.Column="0"
+                                Style="{StaticResource HeroPanelStyle}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Carbon Client"
+                                               Foreground="{StaticResource CarbonTextBrush}"
+                                               FontSize="42"
+                                               FontWeight="Bold" />
+                                    <TextBlock Text="Fast launch surface, version control, account state, and update flow placeholders are ready for implementation."
+                                               Foreground="{StaticResource CarbonMutedTextBrush}"
+                                               FontSize="16"
+                                               TextWrapping="Wrap"
+                                               MaxWidth="560"
+                                               Margin="0,12,0,0" />
+                                </StackPanel>
+
+                                <Button Grid.Row="1"
+                                        Content="Launch Carbon Client"
+                                        Style="{StaticResource LaunchButtonStyle}"
+                                        Command="{Binding LaunchCommand}" />
+                            </Grid>
+                        </Border>
+
+                        <Grid Grid.Row="0"
+                              Grid.Column="2">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="18" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <Border Style="{StaticResource CardStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Account"
+                                               Style="{StaticResource CardTitleTextStyle}" />
+                                    <TextBlock Text="{Binding AccountName}"
+                                               Foreground="{StaticResource CarbonTextBrush}"
+                                               FontSize="20"
+                                               FontWeight="SemiBold"
+                                               Margin="0,12,0,0" />
+                                    <TextBlock Text="Premium Login Coming Soon"
+                                               Foreground="{StaticResource CarbonMutedTextBrush}"
+                                               FontSize="13"
+                                               Margin="0,6,0,0" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Row="2"
+                                    Style="{StaticResource CardStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="News / Changelog"
+                                               Style="{StaticResource CardTitleTextStyle}" />
+                                    <ItemsControl ItemsSource="{Binding NewsItems}" Margin="0,12,0,0">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border BorderBrush="{StaticResource CarbonBorderBrush}"
+                                                        BorderThickness="0,0,0,1"
+                                                        Padding="0,0,0,12"
+                                                        Margin="0,0,0,12">
+                                                    <StackPanel>
+                                                        <TextBlock Text="{Binding Title}"
+                                                                   Foreground="{StaticResource CarbonTextBrush}"
+                                                                   FontSize="14"
+                                                                   FontWeight="SemiBold" />
+                                                        <TextBlock Text="{Binding Summary}"
+                                                                   Foreground="{StaticResource CarbonMutedTextBrush}"
+                                                                   FontSize="12"
+                                                                   TextWrapping="Wrap"
+                                                                   Margin="0,5,0,0" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <Border Grid.Row="2"
+                                Grid.ColumnSpan="3"
+                                Style="{StaticResource CardStyle}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="220" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="150" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel>
+                                    <TextBlock Text="Download / Update"
+                                               Style="{StaticResource CardTitleTextStyle}" />
+                                    <TextBlock Text="{Binding UpdateStatus}"
+                                               Foreground="{StaticResource CarbonMutedTextBrush}"
+                                               FontSize="13"
+                                               Margin="0,7,0,0" />
+                                </StackPanel>
+
+                                <ProgressBar Grid.Column="1"
+                                             Value="{Binding UpdateProgress, Mode=OneWay}"
+                                             Height="12"
+                                             VerticalAlignment="Center" />
+
+                                <TextBlock Grid.Column="2"
+                                           Text="{Binding UpdateProgressText}"
+                                           Foreground="{StaticResource CarbonCyanBrush}"
+                                           FontSize="14"
+                                           FontWeight="SemiBold"
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
