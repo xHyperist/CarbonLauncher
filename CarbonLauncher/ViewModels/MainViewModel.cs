@@ -8,17 +8,13 @@ namespace CarbonLauncher.ViewModels
     public sealed class MainViewModel : ViewModelBase
     {
         private readonly LauncherConfigService _configService;
-        private readonly JavaDetectionService _javaDetectionService;
-        private readonly LauncherStateService _launcherStateService;
         private readonly LauncherConfig _config;
         private LauncherVersion _selectedVersion;
-        private JavaInfo _currentJava;
         private string _currentPage;
         private string _guestUsername;
         private string _javaPath;
         private string _minecraftDirectory;
         private int _allocatedMemoryMb;
-        private string _statusText;
         private bool _isModalVisible;
         private string _modalTitle;
         private string _modalMessage;
@@ -26,44 +22,38 @@ namespace CarbonLauncher.ViewModels
         public MainViewModel()
         {
             _configService = new LauncherConfigService();
-            _javaDetectionService = new JavaDetectionService();
             _config = _configService.Load();
-            _launcherStateService = new LauncherStateService();
-            Versions = new ObservableCollection<LauncherVersion>(_launcherStateService.GetAvailableVersions());
-            NewsItems = new ObservableCollection<NewsItem>(_launcherStateService.GetNewsItems());
+
+            Versions = new ObservableCollection<LauncherVersion>
+            {
+                new LauncherVersion("1.8.9", "Ready"),
+                new LauncherVersion("1.7.10", "Coming Soon")
+            };
+
             NavigationItems = new ObservableCollection<NavigationItemViewModel>
             {
-                new NavigationItemViewModel("Home", "Play", "P"),
-                new NavigationItemViewModel("Versions", "Versions", "V"),
-                new NavigationItemViewModel("Account", "Account", "A"),
-                new NavigationItemViewModel("Settings", "Settings", "S"),
-                new NavigationItemViewModel("News", "News", "N")
+                new NavigationItemViewModel("Home", "Play"),
+                new NavigationItemViewModel("Versions", "Versions"),
+                new NavigationItemViewModel("Account", "Account"),
+                new NavigationItemViewModel("Settings", "Settings")
             };
+
             _selectedVersion = FindVersion(_config.SelectedVersion);
             _currentPage = IsKnownPage(_config.LastSelectedPage) ? _config.LastSelectedPage : "Home";
             _guestUsername = _config.GuestUsername;
             _javaPath = _config.JavaPath;
             _minecraftDirectory = _config.MinecraftDirectory;
             _allocatedMemoryMb = _config.AllocatedMemoryMb;
-            _statusText = "Local Mode Ready";
-            _modalTitle = "Coming Soon";
-            _modalMessage = "This feature is coming soon.";
-            _currentJava = new JavaInfo
-            {
-                IsDetected = false,
-                Source = "Not Found",
-                ErrorMessage = "Java has not been checked yet."
-            };
-            UpdateStatus = "No downloads running";
-            UpdateProgress = 0;
-            LaunchCommand = new RelayCommand(_ => ShowModal("Launch system", "Launch system is coming soon."));
+            _modalTitle = "Carbon Launcher";
+            _modalMessage = string.Empty;
+
+            LaunchCommand = new RelayCommand(_ => ShowModal("Launch", "Launch system is not implemented yet."));
             NavigateCommand = new RelayCommand(page => Navigate(page as string));
             SelectVersionCommand = new RelayCommand(version => SelectVersion(version as LauncherVersion));
-            DetectJavaCommand = new RelayCommand(_ => DetectJava(showResult: true));
+            SaveAccountCommand = new RelayCommand(_ => SaveAccount());
             ShowComingSoonCommand = new RelayCommand(message => ShowModal("Coming Soon", message as string ?? "This feature is coming soon."));
-            ShowInfoCommand = new RelayCommand(message => ShowModal("Saved", message as string ?? "Saved locally."));
             CloseModalCommand = new RelayCommand(_ => IsModalVisible = false);
-            DetectJava(showResult: false);
+
             UpdateActiveNavigation();
             UpdateSelectedVersionState();
         }
@@ -72,68 +62,21 @@ namespace CarbonLauncher.ViewModels
 
         public ObservableCollection<LauncherVersion> Versions { get; }
 
-        public ObservableCollection<NewsItem> NewsItems { get; }
-
         public ICommand LaunchCommand { get; }
 
         public ICommand NavigateCommand { get; }
 
         public ICommand SelectVersionCommand { get; }
 
-        public ICommand DetectJavaCommand { get; }
+        public ICommand SaveAccountCommand { get; }
 
         public ICommand ShowComingSoonCommand { get; }
 
-        public ICommand ShowInfoCommand { get; }
-
         public ICommand CloseModalCommand { get; }
-
-        public string AccountName => $"{(string.IsNullOrWhiteSpace(GuestUsername) ? "Guest" : GuestUsername)} Mode";
 
         public double InitialWindowWidth => _config.WindowWidth;
 
         public double InitialWindowHeight => _config.WindowHeight;
-
-        public string UpdateStatus { get; }
-
-        public double UpdateProgress { get; }
-
-        public string UpdateProgressText => $"{UpdateProgress:0}%";
-
-        public JavaInfo CurrentJava
-        {
-            get => _currentJava;
-            private set
-            {
-                _currentJava = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(JavaStatus));
-                OnPropertyChanged(nameof(JavaStatusText));
-                OnPropertyChanged(nameof(JavaVersionText));
-                OnPropertyChanged(nameof(JavaSourceText));
-            }
-        }
-
-        public string JavaStatus => JavaStatusText;
-
-        public string JavaStatusText
-        {
-            get
-            {
-                if (CurrentJava.IsDetected)
-                {
-                    return "Detected";
-                }
-
-                return CurrentJava.ErrorMessage == "Invalid Java path." ? "Invalid Path" : "Not Found";
-            }
-        }
-
-        public string JavaVersionText => CurrentJava.IsDetected ? CurrentJava.VersionText : "-";
-
-        public string JavaSourceText => string.IsNullOrWhiteSpace(CurrentJava.Source) ? "-" : CurrentJava.Source;
-
-        public string MinecraftDirectoryStatus => string.IsNullOrWhiteSpace(MinecraftDirectory) ? "Not Configured" : "Configured";
 
         public string CurrentPage
         {
@@ -163,10 +106,8 @@ namespace CarbonLauncher.ViewModels
                         return "Account";
                     case "Settings":
                         return "Settings";
-                    case "News":
-                        return "News";
                     default:
-                        return "Play Carbon Client";
+                        return "Play";
                 }
             }
         }
@@ -178,15 +119,13 @@ namespace CarbonLauncher.ViewModels
                 switch (CurrentPage)
                 {
                     case "Versions":
-                        return "Manage available and upcoming Carbon Client game versions.";
+                        return "Choose the local Carbon Client version.";
                     case "Account":
-                        return "Manage your local guest profile.";
+                        return "Manage the local guest profile.";
                     case "Settings":
-                        return "Configure local launcher settings.";
-                    case "News":
-                        return "Read launcher updates and roadmap notes.";
+                        return "Configure local launcher values.";
                     default:
-                        return "Premium Windows launcher foundation for Carbon Client.";
+                        return "Start from a clean local launcher shell.";
                 }
             }
         }
@@ -194,32 +133,34 @@ namespace CarbonLauncher.ViewModels
         public LauncherVersion SelectedVersion
         {
             get => _selectedVersion;
-            set
+            private set
             {
-                if (value != null && _selectedVersion != value)
+                if (_selectedVersion != value)
                 {
                     _selectedVersion = value;
                     _config.SelectedVersion = value.MinecraftVersion;
                     SaveConfig();
                     UpdateSelectedVersionState();
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(SelectedVersionText));
                 }
             }
         }
+
+        public string SelectedVersionText => SelectedVersion.MinecraftVersion;
 
         public string GuestUsername
         {
             get => _guestUsername;
             set
             {
-                string normalizedValue = value ?? string.Empty;
+                string normalizedValue = string.IsNullOrWhiteSpace(value) ? "Guest" : value;
                 if (_guestUsername != normalizedValue)
                 {
                     _guestUsername = normalizedValue;
-                    _config.GuestUsername = string.IsNullOrWhiteSpace(normalizedValue) ? "Guest" : normalizedValue;
+                    _config.GuestUsername = normalizedValue;
                     SaveConfig();
                     OnPropertyChanged();
-                    OnPropertyChanged(nameof(AccountName));
                 }
             }
         }
@@ -233,9 +174,9 @@ namespace CarbonLauncher.ViewModels
                 if (_javaPath != normalizedValue)
                 {
                     _javaPath = normalizedValue;
-                    ValidateManualJavaPath(normalizedValue);
+                    _config.JavaPath = normalizedValue;
+                    SaveConfig();
                     OnPropertyChanged();
-                    OnPropertyChanged(nameof(JavaStatus));
                 }
             }
         }
@@ -252,7 +193,6 @@ namespace CarbonLauncher.ViewModels
                     _config.MinecraftDirectory = normalizedValue;
                     SaveConfig();
                     OnPropertyChanged();
-                    OnPropertyChanged(nameof(MinecraftDirectoryStatus));
                 }
             }
         }
@@ -268,19 +208,6 @@ namespace CarbonLauncher.ViewModels
                     _allocatedMemoryMb = normalizedValue;
                     _config.AllocatedMemoryMb = normalizedValue;
                     SaveConfig();
-                    OnPropertyChanged();
-                }
-            }
-        }
-
-        public string StatusText
-        {
-            get => _statusText;
-            set
-            {
-                if (_statusText != value)
-                {
-                    _statusText = value;
                     OnPropertyChanged();
                 }
             }
@@ -325,18 +252,6 @@ namespace CarbonLauncher.ViewModels
             }
         }
 
-        private void Navigate(string? page)
-        {
-            if (string.IsNullOrWhiteSpace(page))
-            {
-                return;
-            }
-
-            CurrentPage = page;
-            SaveConfig();
-            StatusText = $"{CurrentPageTitle} selected";
-        }
-
         public void SaveWindowState(double width, double height)
         {
             if (width > 0)
@@ -352,12 +267,15 @@ namespace CarbonLauncher.ViewModels
             SaveConfig();
         }
 
-        private void UpdateActiveNavigation()
+        private void Navigate(string? page)
         {
-            foreach (NavigationItemViewModel item in NavigationItems)
+            if (string.IsNullOrWhiteSpace(page) || !IsKnownPage(page))
             {
-                item.IsActive = item.Key == CurrentPage;
+                return;
             }
+
+            CurrentPage = page;
+            SaveConfig();
         }
 
         private void SelectVersion(LauncherVersion? version)
@@ -367,14 +285,21 @@ namespace CarbonLauncher.ViewModels
                 return;
             }
 
-            if (version.Status != "Available")
+            if (version.MinecraftVersion != "1.8.9")
             {
-                ShowModal("Version coming soon", $"{version.MinecraftVersion} is coming soon.");
+                ShowModal("Coming Soon", $"{version.MinecraftVersion} is coming soon.");
                 return;
             }
 
             SelectedVersion = version;
-            StatusText = $"{version.MinecraftVersion} selected";
+            ShowModal("Version Selected", $"{version.MinecraftVersion} is selected.");
+        }
+
+        private void SaveAccount()
+        {
+            _config.GuestUsername = GuestUsername;
+            SaveConfig();
+            ShowModal("Account", "Guest username saved.");
         }
 
         private void ShowModal(string title, string message)
@@ -382,75 +307,21 @@ namespace CarbonLauncher.ViewModels
             ModalTitle = title;
             ModalMessage = message;
             IsModalVisible = true;
-            StatusText = message;
         }
 
-        private void DetectJava(bool showResult)
+        private void UpdateActiveNavigation()
         {
-            JavaInfo detectedJava = _javaDetectionService.Detect(JavaPath);
-            ApplyJavaInfo(detectedJava, saveDetectedPath: detectedJava.IsDetected);
-
-            if (!showResult)
+            foreach (NavigationItemViewModel item in NavigationItems)
             {
-                return;
+                item.IsActive = item.Key == CurrentPage;
             }
-
-            if (detectedJava.IsDetected)
-            {
-                ShowModal(
-                    "Java Detected",
-                    $"{detectedJava.VersionText}\nSource: {detectedJava.Source}\nPath: {detectedJava.JavaPath}");
-                return;
-            }
-
-            ShowModal(
-                "Java Not Found",
-                string.IsNullOrWhiteSpace(detectedJava.ErrorMessage)
-                    ? "Java could not be detected."
-                    : detectedJava.ErrorMessage);
-        }
-
-        private void ValidateManualJavaPath(string javaPath)
-        {
-            if (string.IsNullOrWhiteSpace(javaPath))
-            {
-                _config.JavaPath = string.Empty;
-                CurrentJava = new JavaInfo
-                {
-                    IsDetected = false,
-                    Source = "Manual",
-                    ErrorMessage = "Java path is empty."
-                };
-                SaveConfig();
-                return;
-            }
-
-            JavaInfo javaInfo = _javaDetectionService.ValidateJavaPath(javaPath, "Manual");
-            ApplyJavaInfo(javaInfo, saveDetectedPath: javaInfo.IsDetected);
-        }
-
-        private void ApplyJavaInfo(JavaInfo javaInfo, bool saveDetectedPath)
-        {
-            CurrentJava = javaInfo;
-
-            if (javaInfo.IsDetected && saveDetectedPath)
-            {
-                _javaPath = javaInfo.JavaPath;
-                _config.JavaPath = javaInfo.JavaPath;
-                SaveConfig();
-                OnPropertyChanged(nameof(JavaPath));
-            }
-
-            StatusText = javaInfo.IsDetected
-                ? $"Java detected: {javaInfo.VersionText}"
-                : javaInfo.ErrorMessage;
         }
 
         private void UpdateSelectedVersionState()
         {
             foreach (LauncherVersion version in Versions)
             {
-                version.IsSelected = version == SelectedVersion;
+                version.IsSelected = version.MinecraftVersion == SelectedVersion.MinecraftVersion;
             }
         }
 
@@ -458,7 +329,7 @@ namespace CarbonLauncher.ViewModels
         {
             foreach (LauncherVersion version in Versions)
             {
-                if (version.MinecraftVersion == minecraftVersion)
+                if (version.MinecraftVersion == minecraftVersion && version.MinecraftVersion == "1.8.9")
                 {
                     return version;
                 }
