@@ -115,6 +115,11 @@
                             <Setter Property="Foreground" Value="{StaticResource CarbonTextBrush}" />
                             <Setter Property="BorderBrush" Value="{StaticResource CarbonBlueBrush}" />
                         </Trigger>
+                        <Trigger Property="Tag" Value="True">
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="#1B2B4B" />
+                            <Setter Property="Foreground" Value="{StaticResource CarbonTextBrush}" />
+                            <Setter Property="BorderBrush" Value="{StaticResource CarbonCyanBrush}" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

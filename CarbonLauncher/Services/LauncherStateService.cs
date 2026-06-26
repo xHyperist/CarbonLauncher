@@ -9,7 +9,7 @@ namespace CarbonLauncher.Services
         {
             return new[]
             {
-                new LauncherVersion("1.8.9", string.Empty),
+                new LauncherVersion("1.8.9", "Available"),
                 new LauncherVersion("1.7.10", "Coming Soon")
             };
         }

@@ -39,19 +39,24 @@
                                    Foreground="{StaticResource CarbonTextBrush}"
                                    FontSize="28"
                                    FontWeight="Bold" />
-                        <TextBlock Text="Launcher v0.1.0"
+                        <TextBlock Text="Launcher v0.1.1"
                                    Foreground="{StaticResource CarbonMutedTextBrush}"
                                    FontSize="13"
                                    Margin="1,4,0,0" />
                     </StackPanel>
 
-                    <StackPanel Grid.Row="2">
-                        <Button Style="{StaticResource SidebarButtonStyle}" Content="Home / Play" />
-                        <Button Style="{StaticResource SidebarButtonStyle}" Content="Versions" />
-                        <Button Style="{StaticResource SidebarButtonStyle}" Content="Account" />
-                        <Button Style="{StaticResource SidebarButtonStyle}" Content="Settings" />
-                        <Button Style="{StaticResource SidebarButtonStyle}" Content="News" />
-                    </StackPanel>
+                    <ItemsControl Grid.Row="2"
+                                  ItemsSource="{Binding NavigationItems}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Style="{StaticResource SidebarButtonStyle}"
+                                        Content="{Binding Title}"
+                                        Tag="{Binding IsActive}"
+                                        Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding Key}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
 
                     <Border Grid.Row="3"
                             Style="{StaticResource CompactCardStyle}">
@@ -105,6 +110,9 @@
                                 Content="_"
                                 Click="Minimize_Click" />
                         <Button Style="{StaticResource WindowButtonStyle}"
+                                Content="[]"
+                                Click="MaximizeRestore_Click" />
+                        <Button Style="{StaticResource WindowButtonStyle}"
                                 Content="X"
                                 Click="Close_Click" />
                     </StackPanel>
@@ -123,11 +131,11 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel>
-                            <TextBlock Text="Play Carbon Client"
+                            <TextBlock Text="{Binding CurrentPageTitle}"
                                        Foreground="{StaticResource CarbonTextBrush}"
                                        FontSize="34"
                                        FontWeight="Bold" />
-                            <TextBlock Text="Premium Windows launcher foundation for Carbon Client."
+                            <TextBlock Text="{Binding CurrentPageSubtitle}"
                                        Foreground="{StaticResource CarbonMutedTextBrush}"
                                        FontSize="15"
                                        Margin="0,8,0,0" />
@@ -148,6 +156,16 @@
                     </Grid>
 
                     <Grid Grid.Row="1" Margin="0,26,0,0">
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CurrentPage}" Value="Home">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="1.25*" />
                             <ColumnDefinition Width="24" />
@@ -275,6 +293,188 @@
                                            HorizontalAlignment="Right"
                                            VerticalAlignment="Center" />
                             </Grid>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.Row="1" Margin="0,26,0,0">
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CurrentPage}" Value="Versions">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+                        <Border Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Available Versions"
+                                           Style="{StaticResource CardTitleTextStyle}" />
+                                <ItemsControl ItemsSource="{Binding Versions}" Margin="0,18,0,0">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{StaticResource CarbonPanelLightBrush}"
+                                                    BorderBrush="{StaticResource CarbonBorderBrush}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="8"
+                                                    Padding="18"
+                                                    Margin="0,0,0,12">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="180" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding MinecraftVersion}"
+                                                               Foreground="{StaticResource CarbonTextBrush}"
+                                                               FontSize="22"
+                                                               FontWeight="SemiBold" />
+                                                    <TextBlock Grid.Column="1"
+                                                               Text="{Binding Status}"
+                                                               Foreground="{StaticResource CarbonCyanBrush}"
+                                                               FontSize="14"
+                                                               FontWeight="SemiBold"
+                                                               HorizontalAlignment="Right"
+                                                               VerticalAlignment="Center" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.Row="1" Margin="0,26,0,0">
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CurrentPage}" Value="Account">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+                        <Border Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Account"
+                                           Style="{StaticResource CardTitleTextStyle}" />
+                                <TextBlock Text="{Binding AccountName}"
+                                           Foreground="{StaticResource CarbonTextBrush}"
+                                           FontSize="28"
+                                           FontWeight="Bold"
+                                           Margin="0,18,0,0" />
+                                <TextBlock Text="Premium Login Coming Soon"
+                                           Foreground="{StaticResource CarbonMutedTextBrush}"
+                                           FontSize="15"
+                                           Margin="0,8,0,0" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.Row="1" Margin="0,26,0,0">
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CurrentPage}" Value="Settings">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="18" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="18" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Border Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Java Path"
+                                           Style="{StaticResource CardTitleTextStyle}" />
+                                <TextBlock Text="Auto-detect placeholder"
+                                           Foreground="{StaticResource CarbonTextBrush}"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Margin="0,12,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="2"
+                                Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Minecraft Directory"
+                                           Style="{StaticResource CardTitleTextStyle}" />
+                                <TextBlock Text="%APPDATA%\.minecraft placeholder"
+                                           Foreground="{StaticResource CarbonTextBrush}"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Margin="0,12,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Row="2"
+                                Grid.ColumnSpan="3"
+                                Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Memory"
+                                           Style="{StaticResource CardTitleTextStyle}" />
+                                <TextBlock Text="RAM allocation placeholder"
+                                           Foreground="{StaticResource CarbonTextBrush}"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Margin="0,12,0,0" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.Row="1" Margin="0,26,0,0">
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CurrentPage}" Value="News">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+                        <Border Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Changelog / News"
+                                           Style="{StaticResource CardTitleTextStyle}" />
+                                <ItemsControl ItemsSource="{Binding NewsItems}" Margin="0,18,0,0">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{StaticResource CarbonPanelLightBrush}"
+                                                    BorderBrush="{StaticResource CarbonBorderBrush}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="8"
+                                                    Padding="18"
+                                                    Margin="0,0,0,12">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Title}"
+                                                               Foreground="{StaticResource CarbonTextBrush}"
+                                                               FontSize="18"
+                                                               FontWeight="SemiBold" />
+                                                    <TextBlock Text="{Binding Summary}"
+                                                               Foreground="{StaticResource CarbonMutedTextBrush}"
+                                                               FontSize="13"
+                                                               TextWrapping="Wrap"
+                                                               Margin="0,7,0,0" />
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
                         </Border>
                     </Grid>
                 </Grid>

@@ -14,6 +14,12 @@ namespace CarbonLauncher.Views
 
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            if (e.ClickCount == 2)
+            {
+                ToggleMaximizeRestore();
+                return;
+            }
+
             if (e.ButtonState == MouseButtonState.Pressed)
             {
                 DragMove();
@@ -25,9 +31,21 @@ namespace CarbonLauncher.Views
             WindowState = WindowState.Minimized;
         }
 
+        private void MaximizeRestore_Click(object sender, RoutedEventArgs e)
+        {
+            ToggleMaximizeRestore();
+        }
+
         private void Close_Click(object sender, RoutedEventArgs e)
         {
             Close();
+        }
+
+        private void ToggleMaximizeRestore()
+        {
+            WindowState = WindowState == WindowState.Maximized
+                ? WindowState.Normal
+                : WindowState.Maximized;
         }
     }
 }
