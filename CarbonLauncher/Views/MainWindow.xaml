@@ -263,7 +263,7 @@
                                                        Foreground="{StaticResource CarbonMutedTextBrush}" />
                                             <TextBlock Grid.Row="4"
                                                        Grid.Column="1"
-                                                       Text="{Binding CurrentLaunchProfile.Username}"
+                                                       Text="{Binding PlayerIgnReadinessText}"
                                                        Foreground="{StaticResource CarbonTextBrush}"
                                                        FontWeight="SemiBold" />
                                             <TextBlock Grid.Row="4"
@@ -364,12 +364,38 @@
                                     HorizontalAlignment="Left">
                             <TextBlock Text="Player IGN"
                                        Style="{StaticResource SectionLabelTextStyle}" />
-                            <TextBox Text="{Binding GuestUsername, UpdateSourceTrigger=PropertyChanged}"
-                                     Margin="0,10,0,18" />
+                            <TextBox Text="{Binding PlayerIgnInput, UpdateSourceTrigger=PropertyChanged}"
+                                     Margin="0,10,0,6">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasPlayerIgnError}" Value="True">
+                                                <Setter Property="BorderBrush" Value="{StaticResource CarbonPinkBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                            <TextBlock Text="{Binding PlayerIgnErrorText}"
+                                       Foreground="{StaticResource CarbonPinkBrush}"
+                                       FontSize="12"
+                                       Margin="0,0,0,18">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasPlayerIgnError}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                             <StackPanel Orientation="Horizontal">
                                 <Button Style="{StaticResource GhostButtonStyle}"
                                         Content="Save"
                                         Command="{Binding SaveAccountCommand}"
+                                        IsEnabled="{Binding IsPlayerIgnValid}"
                                         MinWidth="120" />
                                 <Button Style="{StaticResource GhostButtonStyle}"
                                         Content="Microsoft Login"

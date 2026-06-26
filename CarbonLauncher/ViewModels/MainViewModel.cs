@@ -20,6 +20,8 @@ namespace CarbonLauncher.ViewModels
         private LaunchValidationResult _currentLaunchValidation;
         private string _currentPage;
         private string _guestUsername;
+        private string _playerIgnInput;
+        private string _playerIgnErrorText;
         private string _javaPath;
         private string _minecraftDirectory;
         private int _allocatedMemoryMb;
@@ -52,6 +54,8 @@ namespace CarbonLauncher.ViewModels
             _selectedVersion = FindVersion(_config.SelectedVersion);
             _currentPage = IsKnownPage(_config.LastSelectedPage) ? _config.LastSelectedPage : "Home";
             _guestUsername = _config.GuestUsername;
+            _playerIgnInput = _guestUsername;
+            _playerIgnErrorText = ValidateOfflineIgn(_playerIgnInput);
             _javaPath = _config.JavaPath;
             _minecraftDirectory = _config.MinecraftDirectory;
             _allocatedMemoryMb = _config.AllocatedMemoryMb;
@@ -286,6 +290,7 @@ namespace CarbonLauncher.ViewModels
                 _currentLaunchProfile = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(LaunchProfileNameText));
+                OnPropertyChanged(nameof(PlayerIgnReadinessText));
             }
         }
 
@@ -311,21 +316,60 @@ namespace CarbonLauncher.ViewModels
 
         public string LaunchValidationText => CurrentLaunchValidation.Summary;
 
+        public string PlayerIgnReadinessText => HasPlayerIgnError ? "Needs attention" : CurrentLaunchProfile.Username;
+
+        public string PlayerIgnInput
+        {
+            get => _playerIgnInput;
+            set
+            {
+                string normalizedValue = value ?? string.Empty;
+                if (_playerIgnInput != normalizedValue)
+                {
+                    _playerIgnInput = normalizedValue;
+                    PlayerIgnErrorText = ValidateOfflineIgn(normalizedValue);
+                    if (IsPlayerIgnValid)
+                    {
+                        GuestUsername = normalizedValue;
+                    }
+
+                    RefreshLaunchProfile();
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public bool IsPlayerIgnValid => string.IsNullOrWhiteSpace(PlayerIgnErrorText);
+
+        public bool HasPlayerIgnError => !IsPlayerIgnValid;
+
+        public string PlayerIgnErrorText
+        {
+            get => _playerIgnErrorText;
+            private set
+            {
+                if (_playerIgnErrorText != value)
+                {
+                    _playerIgnErrorText = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(IsPlayerIgnValid));
+                    OnPropertyChanged(nameof(HasPlayerIgnError));
+                    OnPropertyChanged(nameof(PlayerIgnReadinessText));
+                }
+            }
+        }
+
         public string GuestUsername
         {
             get => _guestUsername;
             set
             {
-                string normalizedValue = value ?? string.Empty;
+                string normalizedValue = string.IsNullOrWhiteSpace(value) ? "CarbonPlayer" : value;
                 if (_guestUsername != normalizedValue)
                 {
                     _guestUsername = normalizedValue;
-                    if (IsValidOfflineIgn(normalizedValue))
-                    {
-                        _config.GuestUsername = normalizedValue;
-                        SaveConfig();
-                    }
-
+                    _config.GuestUsername = normalizedValue;
+                    SaveConfig();
                     RefreshLaunchProfile();
                     OnPropertyChanged();
                 }
@@ -464,12 +508,13 @@ namespace CarbonLauncher.ViewModels
         private void SaveAccount()
         {
             RefreshLaunchProfile();
-            if (CurrentLaunchValidation.Errors.Exists(error => error.StartsWith("Player IGN")))
+            if (HasPlayerIgnError)
             {
                 ShowModal("Account", "Player IGN is invalid.");
                 return;
             }
 
+            GuestUsername = PlayerIgnInput;
             _config.GuestUsername = GuestUsername;
             SaveConfig();
             ShowModal("Account", "Player IGN saved.");
@@ -563,7 +608,7 @@ namespace CarbonLauncher.ViewModels
             LauncherConfig profileConfig = new LauncherConfig
             {
                 SelectedVersion = SelectedVersion.MinecraftVersion,
-                GuestUsername = GuestUsername,
+                GuestUsername = _config.GuestUsername,
                 JavaPath = JavaPath,
                 MinecraftDirectory = MinecraftDirectory,
                 AllocatedMemoryMb = AllocatedMemoryMb,
@@ -576,10 +621,20 @@ namespace CarbonLauncher.ViewModels
                 CurrentJava,
                 CurrentMinecraftDirectory);
             CurrentLaunchProfile = profile;
-            CurrentLaunchValidation = _launchProfileService.Validate(
+            LaunchValidationResult validation = _launchProfileService.Validate(
                 profile,
                 CurrentJava,
                 CurrentMinecraftDirectory);
+
+            if (HasPlayerIgnError)
+            {
+                validation.Errors.Add(PlayerIgnErrorText);
+                validation.IsValid = false;
+                validation.Summary = $"{validation.Errors.Count} issue(s) need attention.";
+            }
+
+            CurrentLaunchValidation = validation;
+            OnPropertyChanged(nameof(PlayerIgnReadinessText));
         }
 
         private void ShowLaunchValidationModal()
@@ -596,12 +651,26 @@ namespace CarbonLauncher.ViewModels
             ShowModal("Launch Profile Not Ready", message);
         }
 
+        private static string ValidateOfflineIgn(string username)
+        {
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                return "Player IGN is required.";
+            }
+
+            if (username.Length < 3 || username.Length > 16)
+            {
+                return "Player IGN must be 3-16 characters.";
+            }
+
+            return Regex.IsMatch(username, "^[A-Za-z0-9_]+$")
+                ? string.Empty
+                : "Only A-Z, a-z, 0-9 and underscore are allowed. Turkish characters, spaces and special characters are not allowed.";
+        }
+
         private static bool IsValidOfflineIgn(string username)
         {
-            return !string.IsNullOrWhiteSpace(username) &&
-                   username.Length >= 3 &&
-                   username.Length <= 16 &&
-                   Regex.IsMatch(username, "^[A-Za-z0-9_]+$");
+            return string.IsNullOrWhiteSpace(ValidateOfflineIgn(username));
         }
 
         private void ShowModal(string title, string message)

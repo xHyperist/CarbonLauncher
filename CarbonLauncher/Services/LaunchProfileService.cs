@@ -138,7 +138,7 @@ namespace CarbonLauncher.Services
 
             return Regex.IsMatch(username, "^[A-Za-z0-9_]+$")
                 ? string.Empty
-                : "Player IGN can only contain A-Z, a-z, 0-9, and underscore.";
+                : "Player IGN can only contain A-Z, a-z, 0-9, and underscore. Turkish characters, spaces and special characters are not allowed.";
         }
     }
 }
