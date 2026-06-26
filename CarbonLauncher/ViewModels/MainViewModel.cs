@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Text.RegularExpressions;
 using System.Windows.Input;
 using CarbonLauncher.Models;
 using CarbonLauncher.Services;
@@ -10,10 +11,13 @@ namespace CarbonLauncher.ViewModels
         private readonly LauncherConfigService _configService;
         private readonly JavaDetectionService _javaDetectionService;
         private readonly MinecraftDirectoryService _minecraftDirectoryService;
+        private readonly LaunchProfileService _launchProfileService;
         private readonly LauncherConfig _config;
         private LauncherVersion _selectedVersion;
         private JavaInfo _currentJava;
         private MinecraftDirectoryInfo _currentMinecraftDirectory;
+        private LaunchProfile _currentLaunchProfile;
+        private LaunchValidationResult _currentLaunchValidation;
         private string _currentPage;
         private string _guestUsername;
         private string _javaPath;
@@ -28,6 +32,7 @@ namespace CarbonLauncher.ViewModels
             _configService = new LauncherConfigService();
             _javaDetectionService = new JavaDetectionService();
             _minecraftDirectoryService = new MinecraftDirectoryService();
+            _launchProfileService = new LaunchProfileService();
             _config = _configService.Load();
 
             Versions = new ObservableCollection<LauncherVersion>
@@ -63,20 +68,28 @@ namespace CarbonLauncher.ViewModels
                 Source = "Not Found",
                 ErrorMessage = "Minecraft directory has not been checked yet."
             };
+            _currentLaunchProfile = new LaunchProfile();
+            _currentLaunchValidation = new LaunchValidationResult
+            {
+                IsValid = false,
+                Summary = "Launch profile has not been checked yet."
+            };
             _modalTitle = "Carbon Launcher";
             _modalMessage = string.Empty;
 
-            LaunchCommand = new RelayCommand(_ => ShowModal("Launch", "Launch system is not implemented yet."));
+            LaunchCommand = new RelayCommand(_ => ShowLaunchValidationModal());
             NavigateCommand = new RelayCommand(page => Navigate(page as string));
             SelectVersionCommand = new RelayCommand(version => SelectVersion(version as LauncherVersion));
             SaveAccountCommand = new RelayCommand(_ => SaveAccount());
             DetectJavaCommand = new RelayCommand(_ => DetectJava());
             DetectMinecraftDirectoryCommand = new RelayCommand(_ => DetectMinecraftDirectory());
+            RefreshLaunchProfileCommand = new RelayCommand(_ => RefreshLaunchProfile());
             ShowComingSoonCommand = new RelayCommand(message => ShowModal("Coming Soon", message as string ?? "This feature is coming soon."));
             CloseModalCommand = new RelayCommand(_ => IsModalVisible = false);
 
             DetectJava();
             DetectMinecraftDirectory();
+            RefreshLaunchProfile();
             UpdateActiveNavigation();
             UpdateSelectedVersionState();
         }
@@ -96,6 +109,8 @@ namespace CarbonLauncher.ViewModels
         public ICommand DetectJavaCommand { get; }
 
         public ICommand DetectMinecraftDirectoryCommand { get; }
+
+        public ICommand RefreshLaunchProfileCommand { get; }
 
         public ICommand ShowComingSoonCommand { get; }
 
@@ -148,7 +163,7 @@ namespace CarbonLauncher.ViewModels
                     case "Versions":
                         return "Choose the local Carbon Client version.";
                     case "Account":
-                        return "Manage the local guest profile.";
+                        return "Manage the offline player name.";
                     case "Settings":
                         return "Configure local launcher values.";
                     default:
@@ -168,6 +183,7 @@ namespace CarbonLauncher.ViewModels
                     _config.SelectedVersion = value.MinecraftVersion;
                     SaveConfig();
                     UpdateSelectedVersionState();
+                    RefreshLaunchProfile();
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(SelectedVersionText));
                 }
@@ -186,6 +202,7 @@ namespace CarbonLauncher.ViewModels
                 OnPropertyChanged(nameof(JavaStatusText));
                 OnPropertyChanged(nameof(JavaVersionText));
                 OnPropertyChanged(nameof(JavaSourceText));
+                OnPropertyChanged(nameof(LaunchJavaReadinessText));
             }
         }
 
@@ -219,6 +236,7 @@ namespace CarbonLauncher.ViewModels
                 OnPropertyChanged(nameof(MinecraftDirectoryStatusText));
                 OnPropertyChanged(nameof(MinecraftDirectorySourceText));
                 OnPropertyChanged(nameof(MinecraftDirectoryDetailsText));
+                OnPropertyChanged(nameof(LaunchMinecraftDirectoryReadinessText));
             }
         }
 
@@ -260,17 +278,55 @@ namespace CarbonLauncher.ViewModels
             }
         }
 
+        public LaunchProfile CurrentLaunchProfile
+        {
+            get => _currentLaunchProfile;
+            private set
+            {
+                _currentLaunchProfile = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(LaunchProfileNameText));
+            }
+        }
+
+        public LaunchValidationResult CurrentLaunchValidation
+        {
+            get => _currentLaunchValidation;
+            private set
+            {
+                _currentLaunchValidation = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(LaunchStatusText));
+                OnPropertyChanged(nameof(LaunchValidationText));
+            }
+        }
+
+        public string LaunchProfileNameText => CurrentLaunchProfile.ProfileName;
+
+        public string LaunchJavaReadinessText => CurrentJava.IsDetected ? "Ready" : "Missing";
+
+        public string LaunchMinecraftDirectoryReadinessText => CurrentMinecraftDirectory.IsValid ? "Ready" : "Missing";
+
+        public string LaunchStatusText => CurrentLaunchValidation.IsValid ? "Ready" : "Not Ready";
+
+        public string LaunchValidationText => CurrentLaunchValidation.Summary;
+
         public string GuestUsername
         {
             get => _guestUsername;
             set
             {
-                string normalizedValue = string.IsNullOrWhiteSpace(value) ? "Guest" : value;
+                string normalizedValue = value ?? string.Empty;
                 if (_guestUsername != normalizedValue)
                 {
                     _guestUsername = normalizedValue;
-                    _config.GuestUsername = normalizedValue;
-                    SaveConfig();
+                    if (IsValidOfflineIgn(normalizedValue))
+                    {
+                        _config.GuestUsername = normalizedValue;
+                        SaveConfig();
+                    }
+
+                    RefreshLaunchProfile();
                     OnPropertyChanged();
                 }
             }
@@ -317,6 +373,7 @@ namespace CarbonLauncher.ViewModels
                     _allocatedMemoryMb = normalizedValue;
                     _config.AllocatedMemoryMb = normalizedValue;
                     SaveConfig();
+                    RefreshLaunchProfile();
                     OnPropertyChanged();
                 }
             }
@@ -406,9 +463,16 @@ namespace CarbonLauncher.ViewModels
 
         private void SaveAccount()
         {
+            RefreshLaunchProfile();
+            if (CurrentLaunchValidation.Errors.Exists(error => error.StartsWith("Player IGN")))
+            {
+                ShowModal("Account", "Player IGN is invalid.");
+                return;
+            }
+
             _config.GuestUsername = GuestUsername;
             SaveConfig();
-            ShowModal("Account", "Guest username saved.");
+            ShowModal("Account", "Player IGN saved.");
         }
 
         private void DetectJava()
@@ -429,6 +493,7 @@ namespace CarbonLauncher.ViewModels
                     ErrorMessage = "Java path is empty."
                 };
                 SaveConfig();
+                RefreshLaunchProfile();
                 return;
             }
 
@@ -447,6 +512,8 @@ namespace CarbonLauncher.ViewModels
                 SaveConfig();
                 OnPropertyChanged(nameof(JavaPath));
             }
+
+            RefreshLaunchProfile();
         }
 
         private void DetectMinecraftDirectory()
@@ -468,6 +535,7 @@ namespace CarbonLauncher.ViewModels
                     ErrorMessage = "Minecraft directory is empty."
                 };
                 SaveConfig();
+                RefreshLaunchProfile();
                 return;
             }
 
@@ -486,6 +554,54 @@ namespace CarbonLauncher.ViewModels
                 SaveConfig();
                 OnPropertyChanged(nameof(MinecraftDirectory));
             }
+
+            RefreshLaunchProfile();
+        }
+
+        private void RefreshLaunchProfile()
+        {
+            LauncherConfig profileConfig = new LauncherConfig
+            {
+                SelectedVersion = SelectedVersion.MinecraftVersion,
+                GuestUsername = GuestUsername,
+                JavaPath = JavaPath,
+                MinecraftDirectory = MinecraftDirectory,
+                AllocatedMemoryMb = AllocatedMemoryMb,
+                LastSelectedPage = CurrentPage,
+                WindowWidth = _config.WindowWidth,
+                WindowHeight = _config.WindowHeight
+            };
+            LaunchProfile profile = _launchProfileService.CreateDefaultProfile(
+                profileConfig,
+                CurrentJava,
+                CurrentMinecraftDirectory);
+            CurrentLaunchProfile = profile;
+            CurrentLaunchValidation = _launchProfileService.Validate(
+                profile,
+                CurrentJava,
+                CurrentMinecraftDirectory);
+        }
+
+        private void ShowLaunchValidationModal()
+        {
+            if (CurrentLaunchValidation.IsValid)
+            {
+                ShowModal("Launch Profile", "Launch profile is ready. Real launch pipeline is coming next.");
+                return;
+            }
+
+            string message = CurrentLaunchValidation.Errors.Count == 0
+                ? CurrentLaunchValidation.Summary
+                : string.Join("\n", CurrentLaunchValidation.Errors);
+            ShowModal("Launch Profile Not Ready", message);
+        }
+
+        private static bool IsValidOfflineIgn(string username)
+        {
+            return !string.IsNullOrWhiteSpace(username) &&
+                   username.Length >= 3 &&
+                   username.Length <= 16 &&
+                   Regex.IsMatch(username, "^[A-Za-z0-9_]+$");
         }
 
         private void ShowModal(string title, string message)

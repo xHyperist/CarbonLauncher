@@ -72,9 +72,9 @@ namespace CarbonLauncher.Services
                 config.SelectedVersion = "1.8.9";
             }
 
-            if (string.IsNullOrWhiteSpace(config.GuestUsername))
+            if (string.IsNullOrWhiteSpace(config.GuestUsername) || config.GuestUsername == "Guest")
             {
-                config.GuestUsername = "Guest";
+                config.GuestUsername = "CarbonPlayer";
             }
 
             config.JavaPath = config.JavaPath ?? string.Empty;

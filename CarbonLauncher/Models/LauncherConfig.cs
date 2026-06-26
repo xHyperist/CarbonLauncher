@@ -4,7 +4,7 @@ namespace CarbonLauncher.Models
     {
         public string SelectedVersion { get; set; } = "1.8.9";
 
-        public string GuestUsername { get; set; } = "Guest";
+        public string GuestUsername { get; set; } = "CarbonPlayer";
 
         public string JavaPath { get; set; } = string.Empty;
 

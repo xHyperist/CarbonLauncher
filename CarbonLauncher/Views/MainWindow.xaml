@@ -116,7 +116,7 @@
                             Margin="14,0"
                             BorderBrush="{StaticResource CarbonBorderBrush}"
                             BorderThickness="1,0,0,0" />
-                    <TextBlock Text="Build v0.1.1-clean"
+                    <TextBlock Text="Build v0.1.3-clean"
                                Foreground="{StaticResource CarbonMutedTextBrush}"
                                FontSize="12"
                                VerticalAlignment="Center" />
@@ -204,6 +204,87 @@
                                            TextWrapping="Wrap"
                                            MaxWidth="620"
                                            Margin="0,14,0,0" />
+                                <Border Style="{StaticResource CompactCardStyle}"
+                                        MaxWidth="620"
+                                        Margin="0,22,0,0"
+                                        HorizontalAlignment="Left">
+                                    <StackPanel>
+                                        <TextBlock Text="Launch Readiness"
+                                                   Style="{StaticResource SectionLabelTextStyle}" />
+                                        <Grid Margin="0,12,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="150" />
+                                                <ColumnDefinition Width="180" />
+                                                <ColumnDefinition Width="150" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="8" />
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="8" />
+                                                <RowDefinition Height="Auto" />
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Text="Profile"
+                                                       Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding LaunchProfileNameText}"
+                                                       Foreground="{StaticResource CarbonTextBrush}"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Grid.Column="2"
+                                                       Text="Version"
+                                                       Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                            <TextBlock Grid.Column="3"
+                                                       Text="{Binding SelectedVersionText}"
+                                                       Foreground="{StaticResource CarbonTextBrush}"
+                                                       FontWeight="SemiBold" />
+
+                                            <TextBlock Grid.Row="2"
+                                                       Text="Java"
+                                                       Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                            <TextBlock Grid.Row="2"
+                                                       Grid.Column="1"
+                                                       Text="{Binding LaunchJavaReadinessText}"
+                                                       Foreground="{StaticResource CarbonTextBrush}"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Grid.Row="2"
+                                                       Grid.Column="2"
+                                                       Text="Minecraft Directory"
+                                                       Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                            <TextBlock Grid.Row="2"
+                                                       Grid.Column="3"
+                                                       Text="{Binding LaunchMinecraftDirectoryReadinessText}"
+                                                       Foreground="{StaticResource CarbonTextBrush}"
+                                                       FontWeight="SemiBold" />
+
+                                            <TextBlock Grid.Row="4"
+                                                       Text="Player IGN"
+                                                       Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                            <TextBlock Grid.Row="4"
+                                                       Grid.Column="1"
+                                                       Text="{Binding CurrentLaunchProfile.Username}"
+                                                       Foreground="{StaticResource CarbonTextBrush}"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Grid.Row="4"
+                                                       Grid.Column="2"
+                                                       Text="Status"
+                                                       Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                            <TextBlock Grid.Row="4"
+                                                       Grid.Column="3"
+                                                       Text="{Binding LaunchStatusText}"
+                                                       Foreground="{StaticResource CarbonTextBrush}"
+                                                       FontWeight="SemiBold" />
+                                        </Grid>
+                                        <TextBlock Text="{Binding CurrentLaunchProfile.AllocatedMemoryMb, StringFormat=Memory: {0} MB}"
+                                                   Foreground="{StaticResource CarbonMutedTextBrush}"
+                                                   Margin="0,10,0,0" />
+                                        <TextBlock Text="{Binding LaunchValidationText}"
+                                                   Foreground="{StaticResource CarbonMutedTextBrush}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,6,0,0" />
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
                             <StackPanel Grid.Row="1"
                                         Orientation="Horizontal">
@@ -281,7 +362,7 @@
                         </Border.Style>
                         <StackPanel MaxWidth="520"
                                     HorizontalAlignment="Left">
-                            <TextBlock Text="Guest Username"
+                            <TextBlock Text="Player IGN"
                                        Style="{StaticResource SectionLabelTextStyle}" />
                             <TextBox Text="{Binding GuestUsername, UpdateSourceTrigger=PropertyChanged}"
                                      Margin="0,10,0,18" />
