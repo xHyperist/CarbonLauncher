@@ -5,330 +5,486 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Carbon Launcher"
-        Width="1180"
-        Height="720"
-        MinWidth="1040"
-        MinHeight="640"
+        Width="1360"
+        Height="780"
+        MinWidth="1180"
+        MinHeight="680"
         Background="{StaticResource CarbonBackgroundBrush}"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         ResizeMode="CanResizeWithGrip">
     <Border BorderBrush="{StaticResource CarbonBorderBrush}"
             BorderThickness="1"
-            Background="{StaticResource CarbonBackgroundBrush}">
+            Background="{StaticResource CarbonWindowBackgroundBrush}">
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="260" />
+                <ColumnDefinition Width="150" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="0" />
             </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="54" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-            <Border Grid.Column="0"
+            <Border Grid.RowSpan="2"
                     Background="{StaticResource CarbonSidebarBrush}"
                     BorderBrush="{StaticResource CarbonBorderBrush}"
                     BorderThickness="0,0,1,0">
-                <Grid Margin="24">
+                <Grid Margin="16,18">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="34" />
+                        <RowDefinition Height="28" />
                         <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <StackPanel>
+                    <StackPanel HorizontalAlignment="Center">
+                        <Border Width="52"
+                                Height="52"
+                                CornerRadius="16"
+                                BorderBrush="{StaticResource CarbonCyanBrush}"
+                                BorderThickness="1">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#3AFF4FA3" Offset="0" />
+                                    <GradientStop Color="#244DA6FF" Offset="1" />
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <TextBlock Text="C"
+                                       Foreground="{StaticResource CarbonTextBrush}"
+                                       FontSize="25"
+                                       FontWeight="Bold"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                        </Border>
                         <TextBlock Text="Carbon"
-                                   Foreground="{StaticResource CarbonTextBrush}"
-                                   FontSize="28"
-                                   FontWeight="Bold" />
-                        <TextBlock Text="Launcher v0.1.2"
                                    Foreground="{StaticResource CarbonMutedTextBrush}"
-                                   FontSize="13"
-                                   Margin="1,4,0,0" />
+                                   FontSize="11"
+                                   FontWeight="SemiBold"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,9,0,0" />
                     </StackPanel>
 
                     <ItemsControl Grid.Row="2"
                                   ItemsSource="{Binding NavigationItems}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Button Style="{StaticResource SidebarButtonStyle}"
-                                        Content="{Binding Title}"
+                                <Button Style="{StaticResource NavRailButtonStyle}"
                                         Tag="{Binding IsActive}"
                                         Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        CommandParameter="{Binding Key}" />
+                                        CommandParameter="{Binding Key}">
+                                    <TextBlock Text="{Binding Title}"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               TextAlignment="Center" />
+                                </Button>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
                     <Border Grid.Row="3"
-                            Style="{StaticResource CompactCardStyle}">
-                        <StackPanel>
-                            <TextBlock Text="Launcher Status"
-                                       Foreground="{StaticResource CarbonMutedTextBrush}"
-                                       FontSize="12" />
-                            <TextBlock Text="{Binding StatusText}"
+                            Width="54"
+                            Height="54"
+                            CornerRadius="15"
+                            Background="#101827"
+                            BorderBrush="{StaticResource CarbonBorderBrush}"
+                            BorderThickness="1">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="?"
                                        Foreground="{StaticResource CarbonCyanBrush}"
-                                       FontSize="14"
-                                       FontWeight="SemiBold"
-                                       Margin="0,8,0,0" />
+                                       FontSize="17"
+                                       FontWeight="Bold"
+                                       HorizontalAlignment="Center" />
+                            <TextBlock Text="Help"
+                                       Foreground="{StaticResource CarbonMutedTextBrush}"
+                                       FontSize="9"
+                                       HorizontalAlignment="Center" />
                         </StackPanel>
                     </Border>
                 </Grid>
             </Border>
 
-            <Grid Grid.Column="1">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="58" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
+            <Grid Grid.Column="1"
+                  Grid.ColumnSpan="2"
+                  Grid.Row="0"
+                  Background="#6607080D"
+                  MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-                <Grid Grid.Row="0"
-                      Background="{StaticResource CarbonBackgroundBrush}"
-                      MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Margin="28,0,0,0">
+                    <TextBlock Text="Carbon Launcher"
+                               Foreground="{StaticResource CarbonTextBrush}"
+                               FontSize="14"
+                               FontWeight="SemiBold" />
+                    <Border Height="22"
+                            Margin="14,0"
+                            BorderBrush="{StaticResource CarbonBorderBrush}"
+                            BorderThickness="1,0,0,0" />
+                    <TextBlock Text="Build v0.1.3"
+                               Foreground="{StaticResource CarbonMutedTextBrush}"
+                               FontSize="12"
+                               VerticalAlignment="Center" />
+                    <Border Width="8"
+                            Height="8"
+                            CornerRadius="4"
+                            Background="{StaticResource CarbonCyanBrush}"
+                            Margin="18,0,8,0" />
+                    <TextBlock Text="Local Mode"
+                               Foreground="{StaticResource CarbonMutedTextBrush}"
+                               FontSize="12"
+                               VerticalAlignment="Center" />
+                </StackPanel>
 
-                    <StackPanel Orientation="Horizontal"
-                                VerticalAlignment="Center"
-                                Margin="30,0,0,0">
-                        <Border Width="10"
-                                Height="10"
-                                CornerRadius="5"
-                                Background="{StaticResource CarbonPinkBrush}"
-                                Margin="0,0,10,0" />
-                        <TextBlock Text="Carbon Launcher"
-                                   Foreground="{StaticResource CarbonTextBrush}"
-                                   FontSize="15"
-                                   FontWeight="SemiBold" />
-                    </StackPanel>
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Margin="0,0,16,0">
+                    <Button Style="{StaticResource WindowButtonStyle}"
+                            Content="_"
+                            Click="Minimize_Click" />
+                    <Button Style="{StaticResource WindowButtonStyle}"
+                            Content="[]"
+                            Click="MaximizeRestore_Click" />
+                    <Button Style="{StaticResource WindowButtonStyle}"
+                            Content="X"
+                            Click="Close_Click" />
+                </StackPanel>
+            </Grid>
 
-                    <StackPanel Grid.Column="1"
-                                Orientation="Horizontal"
-                                VerticalAlignment="Center"
-                                Margin="0,0,18,0">
-                        <Button Style="{StaticResource WindowButtonStyle}"
-                                Content="_"
-                                Click="Minimize_Click" />
-                        <Button Style="{StaticResource WindowButtonStyle}"
-                                Content="[]"
-                                Click="MaximizeRestore_Click" />
-                        <Button Style="{StaticResource WindowButtonStyle}"
-                                Content="X"
-                                Click="Close_Click" />
-                    </StackPanel>
-                </Grid>
+            <Grid Grid.Column="1"
+                  Grid.Row="1"
+                  Margin="26,22,22,26">
+                <Grid>
+                    <ScrollViewer VerticalScrollBarVisibility="Hidden">
+                        <Grid>
+                            <Grid.Style>
+                                <Style TargetType="Grid">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CurrentPage}" Value="Home">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="132" />
+                                <RowDefinition Height="18" />
+                                <RowDefinition Height="330" />
+                                <RowDefinition Height="18" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
 
-                <Grid Grid.Row="1" Margin="30,18,30,30">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
+                            <Border Style="{StaticResource HeroPanelStyle}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="0" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="0" />
+                                        <RowDefinition Height="0" />
+                                    </Grid.RowDefinitions>
 
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Foreground="{StaticResource CarbonTextBrush}"
+                                                   FontSize="31"
+                                                   FontWeight="Bold"
+                                                   TextTrimming="CharacterEllipsis">
+                                            <Run Text="Welcome back, " />
+                                            <Run Text="{Binding GuestUsername}" />
+                                        </TextBlock>
+                                        <TextBlock Text="Select a version and launch Carbon Client when the launch system is ready."
+                                                   Foreground="{StaticResource CarbonMutedTextBrush}"
+                                                   FontSize="14"
+                                                   Margin="0,8,0,0" />
+                                    </StackPanel>
 
-                        <StackPanel>
-                            <TextBlock Text="{Binding CurrentPageTitle}"
-                                       Foreground="{StaticResource CarbonTextBrush}"
-                                       FontSize="34"
-                                       FontWeight="Bold" />
-                            <TextBlock Text="{Binding CurrentPageSubtitle}"
-                                       Foreground="{StaticResource CarbonMutedTextBrush}"
-                                       FontSize="15"
-                                       Margin="0,8,0,0" />
-                        </StackPanel>
-                    </Grid>
+                                    <Grid Grid.Row="2" Visibility="Collapsed">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="14" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="14" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Style="{StaticResource CompactCardStyle}">
+                                            <StackPanel>
+                                                <TextBlock Text="SELECTED VERSION" Style="{StaticResource SectionLabelTextStyle}" />
+                                                <TextBlock Text="{Binding SelectedVersion.DisplayName}"
+                                                           Foreground="{StaticResource CarbonTextBrush}"
+                                                           FontSize="17"
+                                                           FontWeight="SemiBold"
+                                                           Margin="0,7,0,0" />
+                                            </StackPanel>
+                                        </Border>
+                                        <Border Grid.Column="2" Style="{StaticResource CompactCardStyle}">
+                                            <StackPanel>
+                                                <TextBlock Text="LAST PLAYED" Style="{StaticResource SectionLabelTextStyle}" />
+                                                <TextBlock Text="Not launched yet"
+                                                           Foreground="{StaticResource CarbonTextBrush}"
+                                                           FontSize="17"
+                                                           FontWeight="SemiBold"
+                                                           Margin="0,7,0,0" />
+                                            </StackPanel>
+                                        </Border>
+                                        <Border Grid.Column="4" Style="{StaticResource CompactCardStyle}">
+                                            <StackPanel>
+                                                <TextBlock Text="ONLINE" Style="{StaticResource SectionLabelTextStyle}" />
+                                                <TextBlock Text="Local Session"
+                                                           Foreground="{StaticResource CarbonTextBrush}"
+                                                           FontSize="17"
+                                                           FontWeight="SemiBold"
+                                                           Margin="0,7,0,0" />
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
 
-                    <Grid Grid.Row="1" Margin="0,26,0,0">
-                        <Grid.Style>
-                            <Style TargetType="Grid">
-                                <Setter Property="Visibility" Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding CurrentPage}" Value="Home">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Grid.Style>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="260" />
-                            <ColumnDefinition Width="24" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="24" />
-                            <ColumnDefinition Width="260" />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="24" />
-                            <RowDefinition Height="170" />
-                        </Grid.RowDefinitions>
+                                    <Border Grid.Column="1"
+                                            Grid.RowSpan="3"
+                                            Width="230"
+                                            HorizontalAlignment="Right"
+                                            CornerRadius="22"
+                                            BorderBrush="#446EE7FF"
+                                            BorderThickness="1"
+                                            Visibility="Collapsed">
+                                        <Border.Background>
+                                            <RadialGradientBrush Center="0.28,0.18" RadiusX="0.9" RadiusY="0.9">
+                                                <GradientStop Color="#55FF4FA3" Offset="0" />
+                                                <GradientStop Color="#244DA6FF" Offset="0.45" />
+                                                <GradientStop Color="#00121A2E" Offset="1" />
+                                            </RadialGradientBrush>
+                                        </Border.Background>
+                                        <TextBlock Text="CARBON"
+                                                   Foreground="#33FFFFFF"
+                                                   FontSize="34"
+                                                   FontWeight="Bold"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center" />
+                                    </Border>
+                                </Grid>
+                            </Border>
 
-                        <Border Grid.Row="0"
-                                Grid.Column="0"
-                                Grid.ColumnSpan="3"
-                                Style="{StaticResource CardStyle}">
+                            <Grid Grid.Row="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="22" />
+                                    <ColumnDefinition Width="280" />
+                                </Grid.ColumnDefinitions>
+
+                                <Border Style="{StaticResource HeroPanelStyle}">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="LAUNCH"
+                                                       Foreground="{StaticResource CarbonTextBrush}"
+                                                       FontSize="56"
+                                                       FontWeight="Bold" />
+                                            <TextBlock Text="{Binding SelectedVersion.DisplayName, StringFormat=Selected: {0}}"
+                                                       Foreground="{StaticResource CarbonCyanBrush}"
+                                                       FontSize="16"
+                                                       FontWeight="SemiBold"
+                                                       Margin="0,4,0,0" />
+                                            <Button Style="{StaticResource GhostButtonStyle}"
+                                                    Content="CHANGE VERSION"
+                                                    Command="{Binding NavigateCommand}"
+                                                    CommandParameter="Versions"
+                                                    HorizontalAlignment="Left"
+                                                    Margin="0,18,0,0" />
+                                        </StackPanel>
+                                        <Button Grid.Row="1"
+                                                Style="{StaticResource LaunchButtonStyle}"
+                                                Content="LAUNCH"
+                                                Command="{Binding LaunchCommand}" />
+                                    </Grid>
+                                </Border>
+
+                                <Grid Grid.Column="2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="16" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+                                    <Border Style="{StaticResource CardStyle}">
+                                        <StackPanel>
+                                            <TextBlock Text="SETUP" Style="{StaticResource SectionLabelTextStyle}" />
+                                            <Grid Margin="0,12,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Version" Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                                <TextBlock Grid.Column="1" Text="{Binding SelectedVersion.MinecraftVersion}" Foreground="{StaticResource CarbonTextBrush}" FontWeight="SemiBold" />
+                                            </Grid>
+                                            <Grid Margin="0,8,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Account" Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                                <TextBlock Grid.Column="1" Text="{Binding GuestUsername}" Foreground="{StaticResource CarbonTextBrush}" FontWeight="SemiBold" />
+                                            </Grid>
+                                            <Grid Margin="0,8,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Mode" Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                                <TextBlock Grid.Column="1" Text="Local Mode" Foreground="{StaticResource CarbonCyanBrush}" FontWeight="SemiBold" />
+                                            </Grid>
+                                            <Grid Margin="0,8,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Java" Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                                <TextBlock Grid.Column="1" Text="{Binding JavaStatus}" Foreground="{StaticResource CarbonTextBrush}" FontWeight="SemiBold" />
+                                            </Grid>
+                                            <Grid Margin="0,8,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Minecraft Directory" Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                                <TextBlock Grid.Column="1" Text="{Binding MinecraftDirectoryStatus}" Foreground="{StaticResource CarbonTextBrush}" FontWeight="SemiBold" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Grid.Row="2" Style="{StaticResource CardStyle}">
+                                        <StackPanel>
+                                            <TextBlock Text="LATEST UPDATE" Style="{StaticResource SectionLabelTextStyle}" />
+                                            <TextBlock Text="Local configuration is ready"
+                                                       Foreground="{StaticResource CarbonTextBrush}"
+                                                       FontSize="18"
+                                                       FontWeight="SemiBold"
+                                                       Margin="0,12,0,0" />
+                                            <TextBlock Text="Version, account, and settings are saved locally."
+                                                       Foreground="{StaticResource CarbonMutedTextBrush}"
+                                                       TextWrapping="Wrap"
+                                                       Margin="0,5,0,0" />
+                                            <Button Style="{StaticResource GhostButtonStyle}"
+                                                    Content="Open News"
+                                                    Command="{Binding NavigateCommand}"
+                                                    CommandParameter="News"
+                                                    Margin="0,12,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </Grid>
+
+                            <UniformGrid Grid.Row="4" Columns="1" Rows="1">
+                                <Border Style="{StaticResource CardStyle}" Margin="0,0,11,11">
+                                    <StackPanel>
+                                        <TextBlock Text="LATEST UPDATE" Style="{StaticResource SectionLabelTextStyle}" />
+                                        <TextBlock Text="Local launcher configuration is ready."
+                                                   Foreground="{StaticResource CarbonTextBrush}"
+                                                   FontSize="18"
+                                                   FontWeight="SemiBold"
+                                                   Margin="0,10,0,0" />
+                                        <TextBlock Text="A cleaner launcher surface for the next development steps."
+                                                   Foreground="{StaticResource CarbonMutedTextBrush}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,6,0,0" />
+                                        <Button Style="{StaticResource GhostButtonStyle}"
+                                                Content="Open News"
+                                                Command="{Binding NavigateCommand}"
+                                                CommandParameter="News"
+                                               HorizontalAlignment="Left"
+                                               Margin="0,12,0,0" />
+                                    </StackPanel>
+                                </Border>
+                            </UniformGrid>
+                        </Grid>
+                    </ScrollViewer>
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <Grid>
+                            <Grid.Style>
+                                <Style TargetType="Grid">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CurrentPage}" Value="Versions">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
                             <StackPanel>
-                                <TextBlock Text="News / Changelog"
-                                           Style="{StaticResource CardTitleTextStyle}" />
-                                <ItemsControl ItemsSource="{Binding NewsItems}" Margin="0,18,0,0">
+                                <TextBlock Text="Change Version"
+                                           Foreground="{StaticResource CarbonTextBrush}"
+                                           FontSize="34"
+                                           FontWeight="Bold" />
+                                <TextBlock Text="Select the client version used by the launcher."
+                                           Foreground="{StaticResource CarbonMutedTextBrush}"
+                                           FontSize="14"
+                                           Margin="0,7,0,22" />
+                                <ItemsControl ItemsSource="{Binding Versions}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Columns="2" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border BorderBrush="{StaticResource CarbonBorderBrush}"
-                                                    BorderThickness="0,0,0,1"
-                                                    Padding="0,0,0,14"
-                                                    Margin="0,0,0,14">
+                                            <Border Margin="0,0,18,18">
+                                                <Border.Style>
+                                                    <Style TargetType="Border" BasedOn="{StaticResource CardStyle}">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                <Setter Property="BorderBrush" Value="{StaticResource CarbonCyanBrush}" />
+                                                                <Setter Property="Background" Value="#E01B2B4B" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
                                                 <StackPanel>
-                                                    <TextBlock Text="{Binding Title}"
+                                                    <TextBlock Text="{Binding Status}" Style="{StaticResource SectionLabelTextStyle}" />
+                                                    <TextBlock Text="{Binding MinecraftVersion}"
                                                                Foreground="{StaticResource CarbonTextBrush}"
-                                                               FontSize="18"
-                                                               FontWeight="SemiBold" />
-                                                    <TextBlock Text="{Binding Summary}"
+                                                               FontSize="38"
+                                                               FontWeight="Bold"
+                                                               Margin="0,16,0,0" />
+                                                    <TextBlock Text="{Binding DisplayName}"
                                                                Foreground="{StaticResource CarbonMutedTextBrush}"
                                                                FontSize="13"
-                                                               TextWrapping="Wrap"
-                                                               Margin="0,7,0,0" />
+                                                               Margin="0,6,0,18" />
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="10" />
+                                                            <ColumnDefinition Width="44" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Button Style="{StaticResource GhostButtonStyle}"
+                                                                Content="Select / Launch"
+                                                                Command="{Binding DataContext.SelectVersionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                CommandParameter="{Binding}" />
+                                                        <Button Grid.Column="2"
+                                                                Style="{StaticResource GhostButtonStyle}"
+                                                                Content="G"
+                                                                Command="{Binding DataContext.ShowComingSoonCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                CommandParameter="Version settings are coming soon." />
+                                                    </Grid>
                                                 </StackPanel>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
                             </StackPanel>
-                        </Border>
+                        </Grid>
+                    </ScrollViewer>
 
-                        <Border Grid.Row="0"
-                                Grid.Column="4"
-                                Style="{StaticResource CardStyle}">
-                            <StackPanel>
-                                <TextBlock Text="Account"
-                                           Style="{StaticResource CardTitleTextStyle}" />
-                                <TextBlock Text="{Binding AccountName}"
-                                           Foreground="{StaticResource CarbonTextBrush}"
-                                           FontSize="20"
-                                           FontWeight="SemiBold"
-                                           Margin="0,14,0,0" />
-                                <TextBox Text="{Binding GuestUsername, UpdateSourceTrigger=PropertyChanged}"
-                                         Margin="0,12,0,0" />
-                                <TextBlock Text="Premium Login Coming Soon"
-                                           Foreground="{StaticResource CarbonMutedTextBrush}"
-                                           FontSize="13"
-                                           TextWrapping="Wrap"
-                                           Margin="0,6,0,0" />
-                            </StackPanel>
-                        </Border>
-
-                        <Border Grid.Row="2"
-                                Grid.Column="0"
-                                Style="{StaticResource AccentCardStyle}">
-                            <StackPanel>
-                                <TextBlock Text="Version"
-                                           Style="{StaticResource CardTitleTextStyle}" />
-                                <ComboBox ItemsSource="{Binding Versions}"
-                                          SelectedItem="{Binding SelectedVersion}"
-                                          DisplayMemberPath="DisplayName"
-                                          Margin="0,14,0,0" />
-                            </StackPanel>
-                        </Border>
-
-                        <Border Grid.Row="2"
-                                Grid.Column="2"
-                                Style="{StaticResource HeroPanelStyle}">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="*" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-
-                                <StackPanel>
-                                    <TextBlock Text="Carbon Client"
-                                               Foreground="{StaticResource CarbonTextBrush}"
-                                               FontSize="28"
-                                               FontWeight="Bold" />
-                                    <TextBlock Text="Ready when launch flow is connected."
-                                               Foreground="{StaticResource CarbonMutedTextBrush}"
-                                               FontSize="13"
-                                               Margin="0,6,0,0" />
-                                </StackPanel>
-
-                                <Button Grid.Row="1"
-                                        Content="Launch Carbon Client"
-                                        Style="{StaticResource LaunchButtonStyle}"
-                                        Command="{Binding LaunchCommand}"
-                                        HorizontalAlignment="Center" />
-                            </Grid>
-                        </Border>
-
-                        <Border Grid.Row="2"
-                                Grid.Column="4"
-                                Style="{StaticResource CardStyle}">
-                            <StackPanel>
-                                <TextBlock Text="Settings"
-                                           Style="{StaticResource CardTitleTextStyle}" />
-                                <TextBlock Text="Java, directory, and memory placeholders."
-                                           Foreground="{StaticResource CarbonMutedTextBrush}"
-                                           FontSize="13"
-                                           TextWrapping="Wrap"
-                                           Margin="0,12,0,0" />
-                                <Button Style="{StaticResource SidebarButtonStyle}"
-                                        Content="Open Settings"
-                                        Command="{Binding NavigateCommand}"
-                                        CommandParameter="Settings"
-                                        Margin="0,18,0,0" />
-                            </StackPanel>
-                        </Border>
-                    </Grid>
-
-                    <Grid Grid.Row="1" Margin="0,26,0,0">
-                        <Grid.Style>
-                            <Style TargetType="Grid">
-                                <Setter Property="Visibility" Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding CurrentPage}" Value="Versions">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Grid.Style>
-                        <Border Style="{StaticResource CardStyle}">
-                            <StackPanel>
-                                <TextBlock Text="Available Versions"
-                                           Style="{StaticResource CardTitleTextStyle}" />
-                                <ItemsControl ItemsSource="{Binding Versions}" Margin="0,18,0,0">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Background="{StaticResource CarbonPanelLightBrush}"
-                                                    BorderBrush="{StaticResource CarbonBorderBrush}"
-                                                    BorderThickness="1"
-                                                    CornerRadius="8"
-                                                    Padding="18"
-                                                    Margin="0,0,0,12">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="180" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="{Binding MinecraftVersion}"
-                                                               Foreground="{StaticResource CarbonTextBrush}"
-                                                               FontSize="22"
-                                                               FontWeight="SemiBold" />
-                                                    <TextBlock Grid.Column="1"
-                                                               Text="{Binding Status}"
-                                                               Foreground="{StaticResource CarbonCyanBrush}"
-                                                               FontSize="14"
-                                                               FontWeight="SemiBold"
-                                                               HorizontalAlignment="Right"
-                                                               VerticalAlignment="Center" />
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </Border>
-                    </Grid>
-
-                    <Grid Grid.Row="1" Margin="0,26,0,0">
+                    <Grid>
                         <Grid.Style>
                             <Style TargetType="Grid">
                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -339,28 +495,58 @@
                                 </Style.Triggers>
                             </Style>
                         </Grid.Style>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.05*" />
+                            <ColumnDefinition Width="22" />
+                            <ColumnDefinition Width="0.95*" />
+                        </Grid.ColumnDefinitions>
                         <Border Style="{StaticResource CardStyle}">
                             <StackPanel>
-                                <TextBlock Text="Account"
-                                           Style="{StaticResource CardTitleTextStyle}" />
-                                <TextBlock Text="{Binding AccountName}"
-                                           Foreground="{StaticResource CarbonTextBrush}"
-                                           FontSize="28"
-                                           FontWeight="Bold"
-                                           Margin="0,18,0,0" />
-                                <TextBox Text="{Binding GuestUsername, UpdateSourceTrigger=PropertyChanged}"
-                                         Width="320"
-                                         HorizontalAlignment="Left"
-                                         Margin="0,16,0,0" />
-                                <TextBlock Text="Premium Login Coming Soon"
+                                <TextBlock Text="Carbon Account" Foreground="{StaticResource CarbonTextBrush}" FontSize="34" FontWeight="Bold" />
+                                <TextBlock Text="Guest profile is stored locally. Microsoft auth is coming later."
                                            Foreground="{StaticResource CarbonMutedTextBrush}"
-                                           FontSize="15"
-                                           Margin="0,8,0,0" />
+                                           TextWrapping="Wrap"
+                                           Margin="0,8,0,24" />
+                                <TextBlock Text="Guest Username" Style="{StaticResource SectionLabelTextStyle}" />
+                                <TextBox Text="{Binding GuestUsername, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="0,10,0,18" />
+                                <Button Style="{StaticResource GhostButtonStyle}"
+                                        Content="Save / Apply Guest"
+                                        Command="{Binding ShowInfoCommand}"
+                                        CommandParameter="Guest username is saved locally."
+                                        HorizontalAlignment="Left"
+                                        Margin="0,0,0,18" />
+                                <Button Style="{StaticResource LaunchButtonStyle}"
+                                        Content="MICROSOFT LOGIN"
+                                        FontSize="16"
+                                        Height="56"
+                                        Command="{Binding ShowComingSoonCommand}"
+                                        CommandParameter="Microsoft login is coming soon." />
+                                <StackPanel Orientation="Horizontal" Margin="0,18,0,0">
+                                    <Button Style="{StaticResource GhostButtonStyle}" Content="Discord" Command="{Binding ShowComingSoonCommand}" CommandParameter="Social links are coming soon." Margin="0,0,10,0" />
+                                    <Button Style="{StaticResource GhostButtonStyle}" Content="GitHub" Command="{Binding ShowComingSoonCommand}" CommandParameter="Social links are coming soon." Margin="0,0,10,0" />
+                                    <Button Style="{StaticResource GhostButtonStyle}" Content="Website" Command="{Binding ShowComingSoonCommand}" CommandParameter="Website link is coming soon." />
+                                </StackPanel>
                             </StackPanel>
+                        </Border>
+                        <Border Grid.Column="2" Style="{StaticResource HeroPanelStyle}">
+                            <Grid>
+                                <TextBlock Text="CARBON"
+                                           Foreground="#33FFFFFF"
+                                           FontSize="58"
+                                           FontWeight="Bold"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" />
+                                <TextBlock Text="Premium launcher identity panel"
+                                           Foreground="{StaticResource CarbonMutedTextBrush}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Bottom"
+                                           Margin="0,0,0,28" />
+                            </Grid>
                         </Border>
                     </Grid>
 
-                    <Grid Grid.Row="1" Margin="0,26,0,0">
+                    <Grid>
                         <Grid.Style>
                             <Style TargetType="Grid">
                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -372,92 +558,355 @@
                             </Style>
                         </Grid.Style>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="18" />
+                            <ColumnDefinition Width="170" />
+                            <ColumnDefinition Width="22" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="18" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
                         <Border Style="{StaticResource CardStyle}">
                             <StackPanel>
-                                <TextBlock Text="Java Path"
-                                           Style="{StaticResource CardTitleTextStyle}" />
-                                <TextBox Text="{Binding JavaPath, UpdateSourceTrigger=PropertyChanged}"
-                                         Margin="0,12,0,0" />
+                                <TextBlock Text="Settings" Foreground="{StaticResource CarbonTextBrush}" FontSize="24" FontWeight="Bold" />
+                                <TextBlock Text="Game" Foreground="{StaticResource CarbonCyanBrush}" FontWeight="SemiBold" Margin="0,24,0,0" />
+                                <TextBlock Text="Account" Foreground="{StaticResource CarbonMutedTextBrush}" Margin="0,14,0,0" />
+                                <TextBlock Text="Storage" Foreground="{StaticResource CarbonMutedTextBrush}" Margin="0,14,0,0" />
+                                <TextBlock Text="Advanced" Foreground="{StaticResource CarbonMutedTextBrush}" Margin="0,14,0,0" />
                             </StackPanel>
                         </Border>
-
-                        <Border Grid.Column="2"
-                                Style="{StaticResource CardStyle}">
-                            <StackPanel>
-                                <TextBlock Text="Minecraft Directory"
-                                           Style="{StaticResource CardTitleTextStyle}" />
-                                <TextBox Text="{Binding MinecraftDirectory, UpdateSourceTrigger=PropertyChanged}"
-                                         Margin="0,12,0,0" />
-                            </StackPanel>
-                        </Border>
-
-                        <Border Grid.Row="2"
-                                Grid.ColumnSpan="3"
-                                Style="{StaticResource CardStyle}">
-                            <StackPanel>
-                                <TextBlock Text="Memory"
-                                           Style="{StaticResource CardTitleTextStyle}" />
-                                <TextBox Text="{Binding AllocatedMemoryMb, UpdateSourceTrigger=PropertyChanged}"
-                                         Width="180"
-                                         HorizontalAlignment="Left"
-                                         Margin="0,12,0,0" />
-                            </StackPanel>
-                        </Border>
+                        <StackPanel Grid.Column="2">
+                            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+                                <StackPanel>
+                                    <TextBlock Text="Search Settings" Style="{StaticResource SectionLabelTextStyle}" />
+                                    <TextBox Text="Search settings"
+                                             Foreground="{StaticResource CarbonMutedTextBrush}"
+                                             Margin="0,10,0,0" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+                                <StackPanel>
+                                    <TextBlock Text="Java Path" Style="{StaticResource SectionLabelTextStyle}" />
+                                    <Grid Margin="0,10,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="12" />
+                                            <ColumnDefinition Width="110" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Text="{Binding JavaPath, UpdateSourceTrigger=PropertyChanged}" />
+                                        <Button Grid.Column="2"
+                                                Style="{StaticResource GhostButtonStyle}"
+                                                Content="Browse"
+                                                Command="{Binding ShowComingSoonCommand}"
+                                                CommandParameter="File browsing is coming soon." />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+                                <StackPanel>
+                                    <TextBlock Text="Minecraft Directory" Style="{StaticResource SectionLabelTextStyle}" />
+                                    <Grid Margin="0,10,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="12" />
+                                            <ColumnDefinition Width="110" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Text="{Binding MinecraftDirectory, UpdateSourceTrigger=PropertyChanged}" />
+                                        <Button Grid.Column="2"
+                                                Style="{StaticResource GhostButtonStyle}"
+                                                Content="Browse"
+                                                Command="{Binding ShowComingSoonCommand}"
+                                                CommandParameter="Folder browsing is coming soon." />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource CardStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Allocated Memory MB" Style="{StaticResource SectionLabelTextStyle}" />
+                                    <TextBox Text="{Binding AllocatedMemoryMb, UpdateSourceTrigger=PropertyChanged}"
+                                             Width="220"
+                                             HorizontalAlignment="Left"
+                                             Margin="0,10,0,0" />
+                                    <TextBlock Text="JVM Arguments"
+                                               Style="{StaticResource SectionLabelTextStyle}"
+                                               Margin="0,18,0,0" />
+                                    <Button Style="{StaticResource GhostButtonStyle}"
+                                            Content="Configure"
+                                            Command="{Binding ShowComingSoonCommand}"
+                                            CommandParameter="JVM arguments are coming soon."
+                                            Width="220"
+                                            HorizontalAlignment="Left"
+                                            Margin="0,10,0,0" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
                     </Grid>
 
-                    <Grid Grid.Row="1" Margin="0,26,0,0">
-                        <Grid.Style>
-                            <Style TargetType="Grid">
-                                <Setter Property="Visibility" Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding CurrentPage}" Value="News">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Grid.Style>
-                        <Border Style="{StaticResource CardStyle}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <Grid>
+                            <Grid.Style>
+                                <Style TargetType="Grid">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CurrentPage}" Value="News">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
                             <StackPanel>
-                                <TextBlock Text="Changelog / News"
-                                           Style="{StaticResource CardTitleTextStyle}" />
-                                <ItemsControl ItemsSource="{Binding NewsItems}" Margin="0,18,0,0">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Background="{StaticResource CarbonPanelLightBrush}"
-                                                    BorderBrush="{StaticResource CarbonBorderBrush}"
-                                                    BorderThickness="1"
-                                                    CornerRadius="8"
-                                                    Padding="18"
-                                                    Margin="0,0,0,12">
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding Title}"
-                                                               Foreground="{StaticResource CarbonTextBrush}"
-                                                               FontSize="18"
-                                                               FontWeight="SemiBold" />
-                                                    <TextBlock Text="{Binding Summary}"
-                                                               Foreground="{StaticResource CarbonMutedTextBrush}"
-                                                               FontSize="13"
-                                                               TextWrapping="Wrap"
-                                                               Margin="0,7,0,0" />
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                <TextBlock Text="News Feed"
+                                           Foreground="{StaticResource CarbonTextBrush}"
+                                           FontSize="34"
+                                           FontWeight="Bold" />
+                                <TextBlock Text="Launcher updates, announcements, and roadmap notes."
+                                           Foreground="{StaticResource CarbonMutedTextBrush}"
+                                           FontSize="14"
+                                           Margin="0,7,0,22" />
+                                <UniformGrid Columns="2">
+                                    <Border Style="{StaticResource CardStyle}" Margin="0,0,14,14">
+                                        <StackPanel>
+                                            <TextBlock Text="Announcement" Style="{StaticResource SectionLabelTextStyle}" />
+                                            <TextBlock Text="Launcher cleanup"
+                                                       Foreground="{StaticResource CarbonTextBrush}"
+                                                       FontSize="20"
+                                                       FontWeight="SemiBold"
+                                                       Margin="0,12,0,0" />
+                                            <TextBlock Text="The interface is now cleaner and easier to extend."
+                                                       Foreground="{StaticResource CarbonMutedTextBrush}"
+                                                       TextWrapping="Wrap"
+                                                       Margin="0,8,0,0" />
+                                            <Button Style="{StaticResource GhostButtonStyle}"
+                                                    Content="Read"
+                                                    Command="{Binding ShowComingSoonCommand}"
+                                                    CommandParameter="News details are coming soon."
+                                                    HorizontalAlignment="Left"
+                                                    Margin="0,14,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource CardStyle}" Margin="14,0,0,14">
+                                        <StackPanel>
+                                            <TextBlock Text="Update" Style="{StaticResource SectionLabelTextStyle}" />
+                                            <TextBlock Text="Config-ready settings"
+                                                       Foreground="{StaticResource CarbonTextBrush}"
+                                                       FontSize="20"
+                                                       FontWeight="SemiBold"
+                                                       Margin="0,12,0,0" />
+                                            <TextBlock Text="Java, directory, memory, account, and version values remain persisted."
+                                                       Foreground="{StaticResource CarbonMutedTextBrush}"
+                                                       TextWrapping="Wrap"
+                                                       Margin="0,8,0,0" />
+                                            <Button Style="{StaticResource GhostButtonStyle}"
+                                                    Content="Read"
+                                                    Command="{Binding ShowComingSoonCommand}"
+                                                    CommandParameter="News details are coming soon."
+                                                    HorizontalAlignment="Left"
+                                                    Margin="0,14,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource CardStyle}" Margin="0,14,14,0">
+                                        <StackPanel>
+                                            <TextBlock Text="Feature" Style="{StaticResource SectionLabelTextStyle}" />
+                                            <TextBlock Text="Social features"
+                                                       Foreground="{StaticResource CarbonTextBrush}"
+                                                       FontSize="20"
+                                                       FontWeight="SemiBold"
+                                                       Margin="0,12,0,0" />
+                                            <TextBlock Text="Friend activity and requests will arrive in a future update."
+                                                       Foreground="{StaticResource CarbonMutedTextBrush}"
+                                                       TextWrapping="Wrap"
+                                                       Margin="0,8,0,0" />
+                                            <Button Style="{StaticResource GhostButtonStyle}"
+                                                    Content="Read"
+                                                    Command="{Binding ShowComingSoonCommand}"
+                                                    CommandParameter="News details are coming soon."
+                                                    HorizontalAlignment="Left"
+                                                    Margin="0,14,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource CardStyle}" Margin="14,14,0,0">
+                                        <StackPanel>
+                                            <TextBlock Text="Roadmap" Style="{StaticResource SectionLabelTextStyle}" />
+                                            <TextBlock Text="Auth and launch pipeline"
+                                                       Foreground="{StaticResource CarbonTextBrush}"
+                                                       FontSize="20"
+                                                       FontWeight="SemiBold"
+                                                       Margin="0,12,0,0" />
+                                            <TextBlock Text="Launch, auth, and update work is planned for later milestones."
+                                                       Foreground="{StaticResource CarbonMutedTextBrush}"
+                                                       TextWrapping="Wrap"
+                                                       Margin="0,8,0,0" />
+                                            <Button Style="{StaticResource GhostButtonStyle}"
+                                                    Content="Read"
+                                                    Command="{Binding ShowComingSoonCommand}"
+                                                    CommandParameter="News details are coming soon."
+                                                    HorizontalAlignment="Left"
+                                                    Margin="0,14,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                </UniformGrid>
                             </StackPanel>
-                        </Border>
-                    </Grid>
+                        </Grid>
+                    </ScrollViewer>
                 </Grid>
+            </Grid>
+
+            <Border Grid.Column="2"
+                    Grid.Row="1"
+                    Style="{StaticResource CardStyle}"
+                    Margin="0,22,22,26"
+                    Visibility="Collapsed">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Friends"
+                                       Foreground="{StaticResource CarbonTextBrush}"
+                                       FontSize="24"
+                                       FontWeight="Bold" />
+                            <TextBlock Text="Friends and requests"
+                                       Foreground="{StaticResource CarbonMutedTextBrush}"
+                                       FontSize="12"
+                                       Margin="0,4,0,0" />
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                Width="38"
+                                Height="38"
+                                Style="{StaticResource GhostButtonStyle}"
+                                Content="+"
+                                Command="{Binding ShowComingSoonCommand}"
+                                CommandParameter="Friends system is coming soon." />
+                    </Grid>
+
+                    <TextBox Grid.Row="1"
+                             Text="Search friends"
+                             Foreground="{StaticResource CarbonMutedTextBrush}"
+                             Margin="0,18,0,18" />
+
+                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <TextBlock Text="ONLINE FRIENDS" Style="{StaticResource SectionLabelTextStyle}" Margin="0,0,0,12" />
+                            <Border Style="{StaticResource CompactCardStyle}" Margin="0,0,0,12">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="44" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="58" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="34" Height="34" CornerRadius="10" Background="#334DA6FF" />
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Astra" Foreground="{StaticResource CarbonTextBrush}" FontWeight="SemiBold" />
+                                        <TextBlock Text="In Launcher" Foreground="{StaticResource CarbonCyanBrush}" FontSize="12" />
+                                    </StackPanel>
+                                    <Button Grid.Column="2"
+                                            Style="{StaticResource GhostButtonStyle}"
+                                            Content="View"
+                                            Command="{Binding ShowComingSoonCommand}"
+                                            CommandParameter="Friends system is coming soon." />
+                                </Grid>
+                            </Border>
+                            <Border Style="{StaticResource CompactCardStyle}" Margin="0,0,0,12">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="44" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="58" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="34" Height="34" CornerRadius="10" Background="#44FF4FA3" />
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Nyx" Foreground="{StaticResource CarbonTextBrush}" FontWeight="SemiBold" />
+                                        <TextBlock Text="In-game" Foreground="{StaticResource CarbonBlueBrush}" FontSize="12" />
+                                    </StackPanel>
+                                    <Button Grid.Column="2"
+                                            Style="{StaticResource GhostButtonStyle}"
+                                            Content="View"
+                                            Command="{Binding ShowComingSoonCommand}"
+                                            CommandParameter="Friends system is coming soon." />
+                                </Grid>
+                            </Border>
+                            <Border Style="{StaticResource CompactCardStyle}" Margin="0,0,0,12">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="44" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="58" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="34" Height="34" CornerRadius="10" Background="#3026324D" />
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Vale" Foreground="{StaticResource CarbonTextBrush}" FontWeight="SemiBold" />
+                                        <TextBlock Text="Idle" Foreground="{StaticResource CarbonMutedTextBrush}" FontSize="12" />
+                                    </StackPanel>
+                                    <Button Grid.Column="2"
+                                            Style="{StaticResource GhostButtonStyle}"
+                                            Content="View"
+                                            Command="{Binding ShowComingSoonCommand}"
+                                            CommandParameter="Friends system is coming soon." />
+                                </Grid>
+                            </Border>
+
+                            <TextBlock Text="REQUESTS" Style="{StaticResource SectionLabelTextStyle}" Margin="0,14,0,12" />
+                            <Border Style="{StaticResource CompactCardStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Social features coming soon"
+                                               Foreground="{StaticResource CarbonTextBrush}"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="Friend requests will appear here later."
+                                               Foreground="{StaticResource CarbonMutedTextBrush}"
+                                               FontSize="12"
+                                               Margin="0,5,0,0" />
+                                    <Button Style="{StaticResource GhostButtonStyle}"
+                                            Content="Manage"
+                                            Command="{Binding ShowComingSoonCommand}"
+                                            CommandParameter="Friend requests are coming soon."
+                                            HorizontalAlignment="Left"
+                                            Margin="0,12,0,0" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <Grid Grid.RowSpan="2"
+                  Grid.ColumnSpan="3"
+                  Background="#B807080D">
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsModalVisible}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+                <Border Width="420"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource HeroPanelStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding ModalTitle}"
+                                   Foreground="{StaticResource CarbonTextBrush}"
+                                   FontSize="28"
+                                   FontWeight="Bold" />
+                        <TextBlock Text="{Binding ModalMessage}"
+                                   Foreground="{StaticResource CarbonMutedTextBrush}"
+                                   FontSize="14"
+                                   TextWrapping="Wrap"
+                                   Margin="0,12,0,24" />
+                        <Button Style="{StaticResource LaunchButtonStyle}"
+                                Content="CLOSE"
+                                FontSize="16"
+                                Height="52"
+                                MinWidth="160"
+                                HorizontalAlignment="Right"
+                                Command="{Binding CloseModalCommand}" />
+                    </StackPanel>
+                </Border>
             </Grid>
         </Grid>
     </Border>

@@ -17,6 +17,9 @@ namespace CarbonLauncher.ViewModels
         private string _minecraftDirectory;
         private int _allocatedMemoryMb;
         private string _statusText;
+        private bool _isModalVisible;
+        private string _modalTitle;
+        private string _modalMessage;
 
         public MainViewModel()
         {
@@ -27,11 +30,11 @@ namespace CarbonLauncher.ViewModels
             NewsItems = new ObservableCollection<NewsItem>(_launcherStateService.GetNewsItems());
             NavigationItems = new ObservableCollection<NavigationItemViewModel>
             {
-                new NavigationItemViewModel("Home", "Home / Play"),
-                new NavigationItemViewModel("Versions", "Versions"),
-                new NavigationItemViewModel("Account", "Account"),
-                new NavigationItemViewModel("Settings", "Settings"),
-                new NavigationItemViewModel("News", "News")
+                new NavigationItemViewModel("Home", "Play", "P"),
+                new NavigationItemViewModel("Versions", "Versions", "V"),
+                new NavigationItemViewModel("Account", "Account", "A"),
+                new NavigationItemViewModel("Settings", "Settings", "S"),
+                new NavigationItemViewModel("News", "News", "N")
             };
             _selectedVersion = FindVersion(_config.SelectedVersion);
             _currentPage = IsKnownPage(_config.LastSelectedPage) ? _config.LastSelectedPage : "Home";
@@ -39,12 +42,19 @@ namespace CarbonLauncher.ViewModels
             _javaPath = _config.JavaPath;
             _minecraftDirectory = _config.MinecraftDirectory;
             _allocatedMemoryMb = _config.AllocatedMemoryMb;
-            _statusText = "UI Skeleton Ready";
+            _statusText = "Local Mode Ready";
+            _modalTitle = "Coming Soon";
+            _modalMessage = "This feature is coming soon.";
             UpdateStatus = "No downloads running";
             UpdateProgress = 0;
-            LaunchCommand = new RelayCommand(_ => StatusText = "Launch flow placeholder");
+            LaunchCommand = new RelayCommand(_ => ShowModal("Launch system", "Launch system is coming soon."));
             NavigateCommand = new RelayCommand(page => Navigate(page as string));
+            SelectVersionCommand = new RelayCommand(version => SelectVersion(version as LauncherVersion));
+            ShowComingSoonCommand = new RelayCommand(message => ShowModal("Coming Soon", message as string ?? "This feature is coming soon."));
+            ShowInfoCommand = new RelayCommand(message => ShowModal("Saved", message as string ?? "Saved locally."));
+            CloseModalCommand = new RelayCommand(_ => IsModalVisible = false);
             UpdateActiveNavigation();
+            UpdateSelectedVersionState();
         }
 
         public ObservableCollection<NavigationItemViewModel> NavigationItems { get; }
@@ -57,6 +67,14 @@ namespace CarbonLauncher.ViewModels
 
         public ICommand NavigateCommand { get; }
 
+        public ICommand SelectVersionCommand { get; }
+
+        public ICommand ShowComingSoonCommand { get; }
+
+        public ICommand ShowInfoCommand { get; }
+
+        public ICommand CloseModalCommand { get; }
+
         public string AccountName => $"{(string.IsNullOrWhiteSpace(GuestUsername) ? "Guest" : GuestUsername)} Mode";
 
         public double InitialWindowWidth => _config.WindowWidth;
@@ -68,6 +86,10 @@ namespace CarbonLauncher.ViewModels
         public double UpdateProgress { get; }
 
         public string UpdateProgressText => $"{UpdateProgress:0}%";
+
+        public string JavaStatus => string.IsNullOrWhiteSpace(JavaPath) ? "Not Configured" : "Configured";
+
+        public string MinecraftDirectoryStatus => string.IsNullOrWhiteSpace(MinecraftDirectory) ? "Not Configured" : "Configured";
 
         public string CurrentPage
         {
@@ -114,11 +136,11 @@ namespace CarbonLauncher.ViewModels
                     case "Versions":
                         return "Manage available and upcoming Carbon Client game versions.";
                     case "Account":
-                        return "Account state placeholder for future premium authentication.";
+                        return "Manage your local guest profile.";
                     case "Settings":
-                        return "Local launcher configuration placeholders.";
+                        return "Configure local launcher settings.";
                     case "News":
-                        return "Carbon Launcher changelog and news placeholders.";
+                        return "Read launcher updates and roadmap notes.";
                     default:
                         return "Premium Windows launcher foundation for Carbon Client.";
                 }
@@ -135,6 +157,7 @@ namespace CarbonLauncher.ViewModels
                     _selectedVersion = value;
                     _config.SelectedVersion = value.MinecraftVersion;
                     SaveConfig();
+                    UpdateSelectedVersionState();
                     OnPropertyChanged();
                 }
             }
@@ -169,6 +192,7 @@ namespace CarbonLauncher.ViewModels
                     _config.JavaPath = normalizedValue;
                     SaveConfig();
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(JavaStatus));
                 }
             }
         }
@@ -185,6 +209,7 @@ namespace CarbonLauncher.ViewModels
                     _config.MinecraftDirectory = normalizedValue;
                     SaveConfig();
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(MinecraftDirectoryStatus));
                 }
             }
         }
@@ -213,6 +238,45 @@ namespace CarbonLauncher.ViewModels
                 if (_statusText != value)
                 {
                     _statusText = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public bool IsModalVisible
+        {
+            get => _isModalVisible;
+            private set
+            {
+                if (_isModalVisible != value)
+                {
+                    _isModalVisible = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public string ModalTitle
+        {
+            get => _modalTitle;
+            private set
+            {
+                if (_modalTitle != value)
+                {
+                    _modalTitle = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public string ModalMessage
+        {
+            get => _modalMessage;
+            private set
+            {
+                if (_modalMessage != value)
+                {
+                    _modalMessage = value;
                     OnPropertyChanged();
                 }
             }
@@ -250,6 +314,39 @@ namespace CarbonLauncher.ViewModels
             foreach (NavigationItemViewModel item in NavigationItems)
             {
                 item.IsActive = item.Key == CurrentPage;
+            }
+        }
+
+        private void SelectVersion(LauncherVersion? version)
+        {
+            if (version == null)
+            {
+                return;
+            }
+
+            if (version.Status != "Available")
+            {
+                ShowModal("Version coming soon", $"{version.MinecraftVersion} is coming soon.");
+                return;
+            }
+
+            SelectedVersion = version;
+            StatusText = $"{version.MinecraftVersion} selected";
+        }
+
+        private void ShowModal(string title, string message)
+        {
+            ModalTitle = title;
+            ModalMessage = message;
+            IsModalVisible = true;
+            StatusText = message;
+        }
+
+        private void UpdateSelectedVersionState()
+        {
+            foreach (LauncherVersion version in Versions)
+            {
+                version.IsSelected = version == SelectedVersion;
             }
         }
 
