@@ -311,11 +311,13 @@
                                 </Style.Triggers>
                             </Style>
                         </Border.Style>
-                        <StackPanel MaxWidth="640"
-                                    HorizontalAlignment="Left">
-                            <TextBlock Text="Java Runtime"
-                                       Style="{StaticResource SectionLabelTextStyle}" />
-                            <Grid Margin="0,10,0,18">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel MaxWidth="640"
+                                        HorizontalAlignment="Left">
+                                <TextBlock Text="Java Runtime"
+                                           Style="{StaticResource SectionLabelTextStyle}" />
+                                <Grid Margin="0,10,0,18">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="150" />
                                     <ColumnDefinition Width="*" />
@@ -370,22 +372,79 @@
                                         Command="{Binding DetectJavaCommand}"
                                         HorizontalAlignment="Left"
                                         MinWidth="130" />
-                            </Grid>
-                            <TextBlock Text="Java Path"
-                                       Style="{StaticResource SectionLabelTextStyle}" />
-                            <TextBox Text="{Binding JavaPath, UpdateSourceTrigger=PropertyChanged}"
-                                     Margin="0,10,0,18" />
-                            <TextBlock Text="Minecraft Directory"
-                                       Style="{StaticResource SectionLabelTextStyle}" />
-                            <TextBox Text="{Binding MinecraftDirectory, UpdateSourceTrigger=PropertyChanged}"
-                                     Margin="0,10,0,18" />
-                            <TextBlock Text="Allocated Memory MB"
-                                       Style="{StaticResource SectionLabelTextStyle}" />
-                            <TextBox Text="{Binding AllocatedMemoryMb, UpdateSourceTrigger=PropertyChanged}"
-                                     Width="220"
-                                     HorizontalAlignment="Left"
-                                     Margin="0,10,0,0" />
-                        </StackPanel>
+                                </Grid>
+                                <TextBlock Text="Java Path"
+                                           Style="{StaticResource SectionLabelTextStyle}" />
+                                <TextBox Text="{Binding JavaPath, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="0,10,0,18" />
+                                <TextBlock Text="Minecraft Directory"
+                                           Style="{StaticResource SectionLabelTextStyle}" />
+                                <Grid Margin="0,10,0,18">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="8" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="8" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="8" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="12" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Status"
+                                           Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding MinecraftDirectoryStatusText}"
+                                           Foreground="{StaticResource CarbonTextBrush}"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Grid.Row="2"
+                                           Text="Source"
+                                           Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                <TextBlock Grid.Row="2"
+                                           Grid.Column="1"
+                                           Text="{Binding MinecraftDirectorySourceText}"
+                                           Foreground="{StaticResource CarbonTextBrush}"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Grid.Row="4"
+                                           Text="Directory Path"
+                                           Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                <TextBlock Grid.Row="4"
+                                           Grid.Column="1"
+                                           Text="{Binding CurrentMinecraftDirectory.DirectoryPath}"
+                                           Foreground="{StaticResource CarbonTextBrush}"
+                                           FontWeight="SemiBold"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Grid.Row="6"
+                                           Text="Folder Check"
+                                           Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                <TextBlock Grid.Row="6"
+                                           Grid.Column="1"
+                                           Text="{Binding MinecraftDirectoryDetailsText}"
+                                           Foreground="{StaticResource CarbonTextBrush}"
+                                           FontWeight="SemiBold"
+                                           TextWrapping="Wrap" />
+                                <Button Grid.Row="8"
+                                        Grid.Column="1"
+                                        Style="{StaticResource GhostButtonStyle}"
+                                        Content="Detect Minecraft Folder"
+                                        Command="{Binding DetectMinecraftDirectoryCommand}"
+                                        HorizontalAlignment="Left"
+                                        MinWidth="180" />
+                                </Grid>
+                                <TextBox Text="{Binding MinecraftDirectory, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="0,10,0,18" />
+                                <TextBlock Text="Allocated Memory MB"
+                                           Style="{StaticResource SectionLabelTextStyle}" />
+                                <TextBox Text="{Binding AllocatedMemoryMb, UpdateSourceTrigger=PropertyChanged}"
+                                         Width="220"
+                                         HorizontalAlignment="Left"
+                                         Margin="0,10,0,0" />
+                            </StackPanel>
+                        </ScrollViewer>
                     </Border>
                 </Grid>
             </Grid>

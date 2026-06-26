@@ -9,9 +9,11 @@ namespace CarbonLauncher.ViewModels
     {
         private readonly LauncherConfigService _configService;
         private readonly JavaDetectionService _javaDetectionService;
+        private readonly MinecraftDirectoryService _minecraftDirectoryService;
         private readonly LauncherConfig _config;
         private LauncherVersion _selectedVersion;
         private JavaInfo _currentJava;
+        private MinecraftDirectoryInfo _currentMinecraftDirectory;
         private string _currentPage;
         private string _guestUsername;
         private string _javaPath;
@@ -25,6 +27,7 @@ namespace CarbonLauncher.ViewModels
         {
             _configService = new LauncherConfigService();
             _javaDetectionService = new JavaDetectionService();
+            _minecraftDirectoryService = new MinecraftDirectoryService();
             _config = _configService.Load();
 
             Versions = new ObservableCollection<LauncherVersion>
@@ -53,6 +56,13 @@ namespace CarbonLauncher.ViewModels
                 Source = "Not Found",
                 ErrorMessage = "Java has not been checked yet."
             };
+            _currentMinecraftDirectory = new MinecraftDirectoryInfo
+            {
+                IsDetected = false,
+                IsValid = false,
+                Source = "Not Found",
+                ErrorMessage = "Minecraft directory has not been checked yet."
+            };
             _modalTitle = "Carbon Launcher";
             _modalMessage = string.Empty;
 
@@ -61,10 +71,12 @@ namespace CarbonLauncher.ViewModels
             SelectVersionCommand = new RelayCommand(version => SelectVersion(version as LauncherVersion));
             SaveAccountCommand = new RelayCommand(_ => SaveAccount());
             DetectJavaCommand = new RelayCommand(_ => DetectJava());
+            DetectMinecraftDirectoryCommand = new RelayCommand(_ => DetectMinecraftDirectory());
             ShowComingSoonCommand = new RelayCommand(message => ShowModal("Coming Soon", message as string ?? "This feature is coming soon."));
             CloseModalCommand = new RelayCommand(_ => IsModalVisible = false);
 
             DetectJava();
+            DetectMinecraftDirectory();
             UpdateActiveNavigation();
             UpdateSelectedVersionState();
         }
@@ -82,6 +94,8 @@ namespace CarbonLauncher.ViewModels
         public ICommand SaveAccountCommand { get; }
 
         public ICommand DetectJavaCommand { get; }
+
+        public ICommand DetectMinecraftDirectoryCommand { get; }
 
         public ICommand ShowComingSoonCommand { get; }
 
@@ -195,6 +209,57 @@ namespace CarbonLauncher.ViewModels
 
         public string JavaSourceText => string.IsNullOrWhiteSpace(CurrentJava.Source) ? "-" : CurrentJava.Source;
 
+        public MinecraftDirectoryInfo CurrentMinecraftDirectory
+        {
+            get => _currentMinecraftDirectory;
+            private set
+            {
+                _currentMinecraftDirectory = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(MinecraftDirectoryStatusText));
+                OnPropertyChanged(nameof(MinecraftDirectorySourceText));
+                OnPropertyChanged(nameof(MinecraftDirectoryDetailsText));
+            }
+        }
+
+        public string MinecraftDirectoryStatusText
+        {
+            get
+            {
+                if (CurrentMinecraftDirectory.IsValid)
+                {
+                    return "Detected";
+                }
+
+                return CurrentMinecraftDirectory.ErrorMessage == "Minecraft directory does not exist." ||
+                       CurrentMinecraftDirectory.ErrorMessage == "Directory must contain versions, assets, or libraries."
+                    ? "Invalid"
+                    : "Not Found";
+            }
+        }
+
+        public string MinecraftDirectorySourceText => string.IsNullOrWhiteSpace(CurrentMinecraftDirectory.Source)
+            ? "-"
+            : CurrentMinecraftDirectory.Source;
+
+        public string MinecraftDirectoryDetailsText
+        {
+            get
+            {
+                if (!CurrentMinecraftDirectory.IsValid)
+                {
+                    return string.IsNullOrWhiteSpace(CurrentMinecraftDirectory.ErrorMessage)
+                        ? "-"
+                        : CurrentMinecraftDirectory.ErrorMessage;
+                }
+
+                string versions = CurrentMinecraftDirectory.HasVersionsFolder ? "versions: yes" : "versions: no";
+                string assets = CurrentMinecraftDirectory.HasAssetsFolder ? "assets: yes" : "assets: no";
+                string libraries = CurrentMinecraftDirectory.HasLibrariesFolder ? "libraries: yes" : "libraries: no";
+                return $"{versions}, {assets}, {libraries}";
+            }
+        }
+
         public string GuestUsername
         {
             get => _guestUsername;
@@ -235,8 +300,7 @@ namespace CarbonLauncher.ViewModels
                 if (_minecraftDirectory != normalizedValue)
                 {
                     _minecraftDirectory = normalizedValue;
-                    _config.MinecraftDirectory = normalizedValue;
-                    SaveConfig();
+                    ValidateManualMinecraftDirectory(normalizedValue);
                     OnPropertyChanged();
                 }
             }
@@ -382,6 +446,45 @@ namespace CarbonLauncher.ViewModels
                 _config.JavaPath = javaInfo.JavaPath;
                 SaveConfig();
                 OnPropertyChanged(nameof(JavaPath));
+            }
+        }
+
+        private void DetectMinecraftDirectory()
+        {
+            MinecraftDirectoryInfo directoryInfo = _minecraftDirectoryService.Detect(MinecraftDirectory);
+            ApplyMinecraftDirectoryInfo(directoryInfo, saveDetectedPath: directoryInfo.IsValid);
+        }
+
+        private void ValidateManualMinecraftDirectory(string directoryPath)
+        {
+            if (string.IsNullOrWhiteSpace(directoryPath))
+            {
+                _config.MinecraftDirectory = string.Empty;
+                CurrentMinecraftDirectory = new MinecraftDirectoryInfo
+                {
+                    IsDetected = false,
+                    IsValid = false,
+                    Source = "Manual",
+                    ErrorMessage = "Minecraft directory is empty."
+                };
+                SaveConfig();
+                return;
+            }
+
+            MinecraftDirectoryInfo directoryInfo = _minecraftDirectoryService.ValidateDirectory(directoryPath, "Manual");
+            ApplyMinecraftDirectoryInfo(directoryInfo, saveDetectedPath: directoryInfo.IsValid);
+        }
+
+        private void ApplyMinecraftDirectoryInfo(MinecraftDirectoryInfo directoryInfo, bool saveDetectedPath)
+        {
+            CurrentMinecraftDirectory = directoryInfo;
+
+            if (directoryInfo.IsValid && saveDetectedPath)
+            {
+                _minecraftDirectory = directoryInfo.DirectoryPath;
+                _config.MinecraftDirectory = directoryInfo.DirectoryPath;
+                SaveConfig();
+                OnPropertyChanged(nameof(MinecraftDirectory));
             }
         }
 
