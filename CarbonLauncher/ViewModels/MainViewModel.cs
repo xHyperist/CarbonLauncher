@@ -8,9 +8,11 @@ namespace CarbonLauncher.ViewModels
     public sealed class MainViewModel : ViewModelBase
     {
         private readonly LauncherConfigService _configService;
+        private readonly JavaDetectionService _javaDetectionService;
         private readonly LauncherStateService _launcherStateService;
         private readonly LauncherConfig _config;
         private LauncherVersion _selectedVersion;
+        private JavaInfo _currentJava;
         private string _currentPage;
         private string _guestUsername;
         private string _javaPath;
@@ -24,6 +26,7 @@ namespace CarbonLauncher.ViewModels
         public MainViewModel()
         {
             _configService = new LauncherConfigService();
+            _javaDetectionService = new JavaDetectionService();
             _config = _configService.Load();
             _launcherStateService = new LauncherStateService();
             Versions = new ObservableCollection<LauncherVersion>(_launcherStateService.GetAvailableVersions());
@@ -45,14 +48,22 @@ namespace CarbonLauncher.ViewModels
             _statusText = "Local Mode Ready";
             _modalTitle = "Coming Soon";
             _modalMessage = "This feature is coming soon.";
+            _currentJava = new JavaInfo
+            {
+                IsDetected = false,
+                Source = "Not Found",
+                ErrorMessage = "Java has not been checked yet."
+            };
             UpdateStatus = "No downloads running";
             UpdateProgress = 0;
             LaunchCommand = new RelayCommand(_ => ShowModal("Launch system", "Launch system is coming soon."));
             NavigateCommand = new RelayCommand(page => Navigate(page as string));
             SelectVersionCommand = new RelayCommand(version => SelectVersion(version as LauncherVersion));
+            DetectJavaCommand = new RelayCommand(_ => DetectJava(showResult: true));
             ShowComingSoonCommand = new RelayCommand(message => ShowModal("Coming Soon", message as string ?? "This feature is coming soon."));
             ShowInfoCommand = new RelayCommand(message => ShowModal("Saved", message as string ?? "Saved locally."));
             CloseModalCommand = new RelayCommand(_ => IsModalVisible = false);
+            DetectJava(showResult: false);
             UpdateActiveNavigation();
             UpdateSelectedVersionState();
         }
@@ -68,6 +79,8 @@ namespace CarbonLauncher.ViewModels
         public ICommand NavigateCommand { get; }
 
         public ICommand SelectVersionCommand { get; }
+
+        public ICommand DetectJavaCommand { get; }
 
         public ICommand ShowComingSoonCommand { get; }
 
@@ -87,7 +100,38 @@ namespace CarbonLauncher.ViewModels
 
         public string UpdateProgressText => $"{UpdateProgress:0}%";
 
-        public string JavaStatus => string.IsNullOrWhiteSpace(JavaPath) ? "Not Configured" : "Configured";
+        public JavaInfo CurrentJava
+        {
+            get => _currentJava;
+            private set
+            {
+                _currentJava = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(JavaStatus));
+                OnPropertyChanged(nameof(JavaStatusText));
+                OnPropertyChanged(nameof(JavaVersionText));
+                OnPropertyChanged(nameof(JavaSourceText));
+            }
+        }
+
+        public string JavaStatus => JavaStatusText;
+
+        public string JavaStatusText
+        {
+            get
+            {
+                if (CurrentJava.IsDetected)
+                {
+                    return "Detected";
+                }
+
+                return CurrentJava.ErrorMessage == "Invalid Java path." ? "Invalid Path" : "Not Found";
+            }
+        }
+
+        public string JavaVersionText => CurrentJava.IsDetected ? CurrentJava.VersionText : "-";
+
+        public string JavaSourceText => string.IsNullOrWhiteSpace(CurrentJava.Source) ? "-" : CurrentJava.Source;
 
         public string MinecraftDirectoryStatus => string.IsNullOrWhiteSpace(MinecraftDirectory) ? "Not Configured" : "Configured";
 
@@ -189,8 +233,7 @@ namespace CarbonLauncher.ViewModels
                 if (_javaPath != normalizedValue)
                 {
                     _javaPath = normalizedValue;
-                    _config.JavaPath = normalizedValue;
-                    SaveConfig();
+                    ValidateManualJavaPath(normalizedValue);
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(JavaStatus));
                 }
@@ -340,6 +383,67 @@ namespace CarbonLauncher.ViewModels
             ModalMessage = message;
             IsModalVisible = true;
             StatusText = message;
+        }
+
+        private void DetectJava(bool showResult)
+        {
+            JavaInfo detectedJava = _javaDetectionService.Detect(JavaPath);
+            ApplyJavaInfo(detectedJava, saveDetectedPath: detectedJava.IsDetected);
+
+            if (!showResult)
+            {
+                return;
+            }
+
+            if (detectedJava.IsDetected)
+            {
+                ShowModal(
+                    "Java Detected",
+                    $"{detectedJava.VersionText}\nSource: {detectedJava.Source}\nPath: {detectedJava.JavaPath}");
+                return;
+            }
+
+            ShowModal(
+                "Java Not Found",
+                string.IsNullOrWhiteSpace(detectedJava.ErrorMessage)
+                    ? "Java could not be detected."
+                    : detectedJava.ErrorMessage);
+        }
+
+        private void ValidateManualJavaPath(string javaPath)
+        {
+            if (string.IsNullOrWhiteSpace(javaPath))
+            {
+                _config.JavaPath = string.Empty;
+                CurrentJava = new JavaInfo
+                {
+                    IsDetected = false,
+                    Source = "Manual",
+                    ErrorMessage = "Java path is empty."
+                };
+                SaveConfig();
+                return;
+            }
+
+            JavaInfo javaInfo = _javaDetectionService.ValidateJavaPath(javaPath, "Manual");
+            ApplyJavaInfo(javaInfo, saveDetectedPath: javaInfo.IsDetected);
+        }
+
+        private void ApplyJavaInfo(JavaInfo javaInfo, bool saveDetectedPath)
+        {
+            CurrentJava = javaInfo;
+
+            if (javaInfo.IsDetected && saveDetectedPath)
+            {
+                _javaPath = javaInfo.JavaPath;
+                _config.JavaPath = javaInfo.JavaPath;
+                SaveConfig();
+                OnPropertyChanged(nameof(JavaPath));
+            }
+
+            StatusText = javaInfo.IsDetected
+                ? $"Java detected: {javaInfo.VersionText}"
+                : javaInfo.ErrorMessage;
         }
 
         private void UpdateSelectedVersionState()

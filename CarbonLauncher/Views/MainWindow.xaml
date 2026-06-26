@@ -239,7 +239,7 @@
                                         <Border Grid.Column="4" Style="{StaticResource CompactCardStyle}">
                                             <StackPanel>
                                                 <TextBlock Text="ONLINE" Style="{StaticResource SectionLabelTextStyle}" />
-                                                <TextBlock Text="Local Session"
+                                                <TextBlock Text="Ready"
                                                            Foreground="{StaticResource CarbonTextBrush}"
                                                            FontSize="17"
                                                            FontWeight="SemiBold"
@@ -582,19 +582,52 @@
                             </Border>
                             <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
                                 <StackPanel>
-                                    <TextBlock Text="Java Path" Style="{StaticResource SectionLabelTextStyle}" />
+                                    <TextBlock Text="Java Runtime" Style="{StaticResource SectionLabelTextStyle}" />
+                                    <Grid Margin="0,12,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="160" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="8" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="8" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="8" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="8" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Text="Java Status" Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding JavaStatusText}" Foreground="{StaticResource CarbonTextBrush}" FontWeight="SemiBold" />
+                                        <TextBlock Grid.Row="2" Text="Java Version" Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding JavaVersionText}" Foreground="{StaticResource CarbonTextBrush}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                        <TextBlock Grid.Row="4" Text="Java Source" Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding JavaSourceText}" Foreground="{StaticResource CarbonTextBrush}" FontWeight="SemiBold" />
+                                        <TextBlock Grid.Row="6" Text="Java Path" Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                        <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding CurrentJava.JavaPath}" Foreground="{StaticResource CarbonTextBrush}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                        <TextBlock Grid.Row="8" Text="Java Message" Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                        <TextBlock Grid.Row="8" Grid.Column="1" Text="{Binding CurrentJava.ErrorMessage}" Foreground="{StaticResource CarbonMutedTextBrush}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                    </Grid>
                                     <Grid Margin="0,10,0,0">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="12" />
                                             <ColumnDefinition Width="110" />
+                                            <ColumnDefinition Width="12" />
+                                            <ColumnDefinition Width="120" />
                                         </Grid.ColumnDefinitions>
                                         <TextBox Text="{Binding JavaPath, UpdateSourceTrigger=PropertyChanged}" />
                                         <Button Grid.Column="2"
                                                 Style="{StaticResource GhostButtonStyle}"
                                                 Content="Browse"
-                                                Command="{Binding ShowComingSoonCommand}"
-                                                CommandParameter="File browsing is coming soon." />
+                                                Command="{Binding DataContext.ShowComingSoonCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="File picker is coming soon." />
+                                        <Button Grid.Column="4"
+                                                Style="{StaticResource GhostButtonStyle}"
+                                                Content="Detect Java"
+                                                Command="{Binding DataContext.DetectJavaCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
                                     </Grid>
                                 </StackPanel>
                             </Border>
@@ -611,8 +644,8 @@
                                         <Button Grid.Column="2"
                                                 Style="{StaticResource GhostButtonStyle}"
                                                 Content="Browse"
-                                                Command="{Binding ShowComingSoonCommand}"
-                                                CommandParameter="Folder browsing is coming soon." />
+                                                Command="{Binding DataContext.ShowComingSoonCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="Folder picker is coming soon." />
                                     </Grid>
                                 </StackPanel>
                             </Border>
@@ -628,7 +661,7 @@
                                                Margin="0,18,0,0" />
                                     <Button Style="{StaticResource GhostButtonStyle}"
                                             Content="Configure"
-                                            Command="{Binding ShowComingSoonCommand}"
+                                            Command="{Binding DataContext.ShowComingSoonCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                             CommandParameter="JVM arguments are coming soon."
                                             Width="220"
                                             HorizontalAlignment="Left"
@@ -789,7 +822,7 @@
 
                     <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
                         <StackPanel>
-                            <TextBlock Text="ONLINE FRIENDS" Style="{StaticResource SectionLabelTextStyle}" Margin="0,0,0,12" />
+                            <TextBlock Text="FRIENDS" Style="{StaticResource SectionLabelTextStyle}" Margin="0,0,0,12" />
                             <Border Style="{StaticResource CompactCardStyle}" Margin="0,0,0,12">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -851,10 +884,10 @@
                             <TextBlock Text="REQUESTS" Style="{StaticResource SectionLabelTextStyle}" Margin="0,14,0,12" />
                             <Border Style="{StaticResource CompactCardStyle}">
                                 <StackPanel>
-                                    <TextBlock Text="Social features coming soon"
+                                    <TextBlock Text="Coming Soon"
                                                Foreground="{StaticResource CarbonTextBrush}"
                                                FontWeight="SemiBold" />
-                                    <TextBlock Text="Friend requests will appear here later."
+                                    <TextBlock Text="Social features will be added later."
                                                Foreground="{StaticResource CarbonMutedTextBrush}"
                                                FontSize="12"
                                                Margin="0,5,0,0" />
