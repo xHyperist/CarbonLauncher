@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
 using CarbonLauncher.ViewModels;
@@ -9,7 +10,10 @@ namespace CarbonLauncher.Views
         public MainWindow()
         {
             InitializeComponent();
-            DataContext = new MainViewModel();
+            MainViewModel viewModel = new MainViewModel();
+            DataContext = viewModel;
+            Width = viewModel.InitialWindowWidth;
+            Height = viewModel.InitialWindowHeight;
         }
 
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -46,6 +50,16 @@ namespace CarbonLauncher.Views
             WindowState = WindowState == WindowState.Maximized
                 ? WindowState.Normal
                 : WindowState.Maximized;
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            if (DataContext is MainViewModel viewModel && WindowState == WindowState.Normal)
+            {
+                viewModel.SaveWindowState(Width, Height);
+            }
+
+            base.OnClosing(e);
         }
     }
 }

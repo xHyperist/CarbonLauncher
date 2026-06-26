@@ -34,6 +34,16 @@
         <Setter Property="Padding" Value="10,0" />
     </Style>
 
+    <Style TargetType="TextBox">
+        <Setter Property="Height" Value="38" />
+        <Setter Property="Foreground" Value="{StaticResource CarbonTextBrush}" />
+        <Setter Property="Background" Value="{StaticResource CarbonPanelLightBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource CarbonBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="10,7" />
+        <Setter Property="CaretBrush" Value="{StaticResource CarbonCyanBrush}" />
+    </Style>
+
     <Style TargetType="ProgressBar">
         <Setter Property="Foreground" Value="{StaticResource CarbonCyanBrush}" />
         <Setter Property="Background" Value="{StaticResource CarbonPanelLightBrush}" />

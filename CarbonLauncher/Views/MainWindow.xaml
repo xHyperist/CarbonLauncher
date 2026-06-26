@@ -39,7 +39,7 @@
                                    Foreground="{StaticResource CarbonTextBrush}"
                                    FontSize="28"
                                    FontWeight="Bold" />
-                        <TextBlock Text="Launcher v0.1.1"
+                        <TextBlock Text="Launcher v0.1.2"
                                    Foreground="{StaticResource CarbonMutedTextBrush}"
                                    FontSize="13"
                                    Margin="1,4,0,0" />
@@ -208,6 +208,8 @@
                                            FontSize="20"
                                            FontWeight="SemiBold"
                                            Margin="0,14,0,0" />
+                                <TextBox Text="{Binding GuestUsername, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="0,12,0,0" />
                                 <TextBlock Text="Premium Login Coming Soon"
                                            Foreground="{StaticResource CarbonMutedTextBrush}"
                                            FontSize="13"
@@ -346,6 +348,10 @@
                                            FontSize="28"
                                            FontWeight="Bold"
                                            Margin="0,18,0,0" />
+                                <TextBox Text="{Binding GuestUsername, UpdateSourceTrigger=PropertyChanged}"
+                                         Width="320"
+                                         HorizontalAlignment="Left"
+                                         Margin="0,16,0,0" />
                                 <TextBlock Text="Premium Login Coming Soon"
                                            Foreground="{StaticResource CarbonMutedTextBrush}"
                                            FontSize="15"
@@ -380,11 +386,8 @@
                             <StackPanel>
                                 <TextBlock Text="Java Path"
                                            Style="{StaticResource CardTitleTextStyle}" />
-                                <TextBlock Text="Auto-detect placeholder"
-                                           Foreground="{StaticResource CarbonTextBrush}"
-                                           FontSize="18"
-                                           FontWeight="SemiBold"
-                                           Margin="0,12,0,0" />
+                                <TextBox Text="{Binding JavaPath, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="0,12,0,0" />
                             </StackPanel>
                         </Border>
 
@@ -393,11 +396,8 @@
                             <StackPanel>
                                 <TextBlock Text="Minecraft Directory"
                                            Style="{StaticResource CardTitleTextStyle}" />
-                                <TextBlock Text="%APPDATA%\.minecraft placeholder"
-                                           Foreground="{StaticResource CarbonTextBrush}"
-                                           FontSize="18"
-                                           FontWeight="SemiBold"
-                                           Margin="0,12,0,0" />
+                                <TextBox Text="{Binding MinecraftDirectory, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="0,12,0,0" />
                             </StackPanel>
                         </Border>
 
@@ -407,11 +407,10 @@
                             <StackPanel>
                                 <TextBlock Text="Memory"
                                            Style="{StaticResource CardTitleTextStyle}" />
-                                <TextBlock Text="RAM allocation placeholder"
-                                           Foreground="{StaticResource CarbonTextBrush}"
-                                           FontSize="18"
-                                           FontWeight="SemiBold"
-                                           Margin="0,12,0,0" />
+                                <TextBox Text="{Binding AllocatedMemoryMb, UpdateSourceTrigger=PropertyChanged}"
+                                         Width="180"
+                                         HorizontalAlignment="Left"
+                                         Margin="0,12,0,0" />
                             </StackPanel>
                         </Border>
                     </Grid>
