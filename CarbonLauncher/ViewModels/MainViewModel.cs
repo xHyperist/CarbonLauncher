@@ -8,8 +8,10 @@ namespace CarbonLauncher.ViewModels
     public sealed class MainViewModel : ViewModelBase
     {
         private readonly LauncherConfigService _configService;
+        private readonly JavaDetectionService _javaDetectionService;
         private readonly LauncherConfig _config;
         private LauncherVersion _selectedVersion;
+        private JavaInfo _currentJava;
         private string _currentPage;
         private string _guestUsername;
         private string _javaPath;
@@ -22,6 +24,7 @@ namespace CarbonLauncher.ViewModels
         public MainViewModel()
         {
             _configService = new LauncherConfigService();
+            _javaDetectionService = new JavaDetectionService();
             _config = _configService.Load();
 
             Versions = new ObservableCollection<LauncherVersion>
@@ -44,6 +47,12 @@ namespace CarbonLauncher.ViewModels
             _javaPath = _config.JavaPath;
             _minecraftDirectory = _config.MinecraftDirectory;
             _allocatedMemoryMb = _config.AllocatedMemoryMb;
+            _currentJava = new JavaInfo
+            {
+                IsDetected = false,
+                Source = "Not Found",
+                ErrorMessage = "Java has not been checked yet."
+            };
             _modalTitle = "Carbon Launcher";
             _modalMessage = string.Empty;
 
@@ -51,9 +60,11 @@ namespace CarbonLauncher.ViewModels
             NavigateCommand = new RelayCommand(page => Navigate(page as string));
             SelectVersionCommand = new RelayCommand(version => SelectVersion(version as LauncherVersion));
             SaveAccountCommand = new RelayCommand(_ => SaveAccount());
+            DetectJavaCommand = new RelayCommand(_ => DetectJava());
             ShowComingSoonCommand = new RelayCommand(message => ShowModal("Coming Soon", message as string ?? "This feature is coming soon."));
             CloseModalCommand = new RelayCommand(_ => IsModalVisible = false);
 
+            DetectJava();
             UpdateActiveNavigation();
             UpdateSelectedVersionState();
         }
@@ -69,6 +80,8 @@ namespace CarbonLauncher.ViewModels
         public ICommand SelectVersionCommand { get; }
 
         public ICommand SaveAccountCommand { get; }
+
+        public ICommand DetectJavaCommand { get; }
 
         public ICommand ShowComingSoonCommand { get; }
 
@@ -149,6 +162,39 @@ namespace CarbonLauncher.ViewModels
 
         public string SelectedVersionText => SelectedVersion.MinecraftVersion;
 
+        public JavaInfo CurrentJava
+        {
+            get => _currentJava;
+            private set
+            {
+                _currentJava = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(JavaStatusText));
+                OnPropertyChanged(nameof(JavaVersionText));
+                OnPropertyChanged(nameof(JavaSourceText));
+            }
+        }
+
+        public string JavaStatusText
+        {
+            get
+            {
+                if (CurrentJava.IsDetected)
+                {
+                    return "Detected";
+                }
+
+                return CurrentJava.ErrorMessage == "Invalid Java path." ||
+                       CurrentJava.ErrorMessage == "Java path must point to java.exe."
+                    ? "Invalid"
+                    : "Not Found";
+            }
+        }
+
+        public string JavaVersionText => CurrentJava.IsDetected ? CurrentJava.VersionText : "-";
+
+        public string JavaSourceText => string.IsNullOrWhiteSpace(CurrentJava.Source) ? "-" : CurrentJava.Source;
+
         public string GuestUsername
         {
             get => _guestUsername;
@@ -174,8 +220,7 @@ namespace CarbonLauncher.ViewModels
                 if (_javaPath != normalizedValue)
                 {
                     _javaPath = normalizedValue;
-                    _config.JavaPath = normalizedValue;
-                    SaveConfig();
+                    ValidateManualJavaPath(normalizedValue);
                     OnPropertyChanged();
                 }
             }
@@ -300,6 +345,44 @@ namespace CarbonLauncher.ViewModels
             _config.GuestUsername = GuestUsername;
             SaveConfig();
             ShowModal("Account", "Guest username saved.");
+        }
+
+        private void DetectJava()
+        {
+            JavaInfo javaInfo = _javaDetectionService.Detect(JavaPath);
+            ApplyJavaInfo(javaInfo, saveDetectedPath: javaInfo.IsDetected);
+        }
+
+        private void ValidateManualJavaPath(string javaPath)
+        {
+            if (string.IsNullOrWhiteSpace(javaPath))
+            {
+                _config.JavaPath = string.Empty;
+                CurrentJava = new JavaInfo
+                {
+                    IsDetected = false,
+                    Source = "Manual",
+                    ErrorMessage = "Java path is empty."
+                };
+                SaveConfig();
+                return;
+            }
+
+            JavaInfo javaInfo = _javaDetectionService.ValidateJavaPath(javaPath, "Manual");
+            ApplyJavaInfo(javaInfo, saveDetectedPath: javaInfo.IsDetected);
+        }
+
+        private void ApplyJavaInfo(JavaInfo javaInfo, bool saveDetectedPath)
+        {
+            CurrentJava = javaInfo;
+
+            if (javaInfo.IsDetected && saveDetectedPath)
+            {
+                _javaPath = javaInfo.JavaPath;
+                _config.JavaPath = javaInfo.JavaPath;
+                SaveConfig();
+                OnPropertyChanged(nameof(JavaPath));
+            }
         }
 
         private void ShowModal(string title, string message)
