@@ -293,6 +293,59 @@
                                                    Foreground="{StaticResource CarbonMutedTextBrush}"
                                                    TextWrapping="Wrap"
                                                    Margin="0,6,0,0" />
+                                        <Border BorderBrush="{StaticResource CarbonBorderBrush}"
+                                                BorderThickness="0,1,0,0"
+                                                Height="1"
+                                                Margin="0,14,0,12" />
+                                        <TextBlock Text="Command Preview"
+                                                   Style="{StaticResource SectionLabelTextStyle}" />
+                                        <Grid Margin="0,12,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="150" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="8" />
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="8" />
+                                                <RowDefinition Height="Auto" />
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Text="Command Status"
+                                                       Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding LaunchCommandStatusText}"
+                                                       Foreground="{StaticResource CarbonTextBrush}"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Grid.Row="2"
+                                                       Text="Main Class"
+                                                       Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                            <TextBlock Grid.Row="2"
+                                                       Grid.Column="1"
+                                                       Text="{Binding CurrentLaunchCommand.MainClass}"
+                                                       Foreground="{StaticResource CarbonTextBrush}"
+                                                       FontWeight="SemiBold"
+                                                       TextWrapping="Wrap" />
+                                            <TextBlock Grid.Row="4"
+                                                       Text="Working Directory"
+                                                       Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                            <TextBlock Grid.Row="4"
+                                                       Grid.Column="1"
+                                                       Text="{Binding CurrentLaunchCommand.WorkingDirectory}"
+                                                       Foreground="{StaticResource CarbonTextBrush}"
+                                                       FontWeight="SemiBold"
+                                                       TextWrapping="Wrap" />
+                                        </Grid>
+                                        <TextBlock Text="{Binding LaunchCommandPreviewText}"
+                                                   Foreground="{StaticResource CarbonMutedTextBrush}"
+                                                   TextWrapping="Wrap"
+                                                   MaxHeight="54"
+                                                   Margin="0,10,0,12" />
+                                        <Button Style="{StaticResource GhostButtonStyle}"
+                                                Content="Refresh Command"
+                                                Command="{Binding RefreshLaunchCommandCommand}"
+                                                MinWidth="150"
+                                                HorizontalAlignment="Left" />
                                     </StackPanel>
                                 </Border>
                             </StackPanel>

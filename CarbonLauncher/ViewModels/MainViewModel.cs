@@ -14,6 +14,7 @@ namespace CarbonLauncher.ViewModels
         private readonly JavaDetectionService _javaDetectionService;
         private readonly MinecraftDirectoryService _minecraftDirectoryService;
         private readonly LaunchProfileService _launchProfileService;
+        private readonly LaunchCommandBuilderService _launchCommandBuilderService;
         private readonly VersionManifestService _versionManifestService;
         private readonly ClientJarResolverService _clientJarResolverService;
         private readonly LauncherConfig _config;
@@ -25,6 +26,7 @@ namespace CarbonLauncher.ViewModels
         private ClientJarInfo _currentClientJar;
         private LaunchProfile _currentLaunchProfile;
         private LaunchValidationResult _currentLaunchValidation;
+        private CarbonLauncher.Models.LaunchCommand _currentLaunchCommand;
         private string _currentPage;
         private string _guestUsername;
         private string _playerIgnInput;
@@ -45,6 +47,7 @@ namespace CarbonLauncher.ViewModels
             _javaDetectionService = new JavaDetectionService();
             _minecraftDirectoryService = new MinecraftDirectoryService();
             _launchProfileService = new LaunchProfileService();
+            _launchCommandBuilderService = new LaunchCommandBuilderService();
             _versionManifestService = new VersionManifestService(_storageService);
             _clientJarResolverService = new ClientJarResolverService(_storageService);
             _config = _configService.Load();
@@ -94,6 +97,10 @@ namespace CarbonLauncher.ViewModels
                 IsValid = false,
                 Summary = "Launch profile has not been checked yet."
             };
+            _currentLaunchCommand = new CarbonLauncher.Models.LaunchCommand
+            {
+                IsBuildable = false
+            };
             _modalTitle = "Carbon Launcher";
             _modalMessage = string.Empty;
 
@@ -109,6 +116,11 @@ namespace CarbonLauncher.ViewModels
                 RefreshLaunchProfile();
             });
             RefreshLaunchProfileCommand = new RelayCommand(_ => RefreshLaunchProfile());
+            RefreshLaunchCommandCommand = new RelayCommand(_ =>
+            {
+                RefreshClientJar();
+                RefreshLaunchProfile();
+            });
             OpenStorageFolderCommand = new RelayCommand(_ => OpenStorageFolder());
             ShowComingSoonCommand = new RelayCommand(message => ShowModal("Coming Soon", message as string ?? "This feature is coming soon."));
             CloseModalCommand = new RelayCommand(_ => IsModalVisible = false);
@@ -140,6 +152,8 @@ namespace CarbonLauncher.ViewModels
         public ICommand CheckClientJarCommand { get; }
 
         public ICommand RefreshLaunchProfileCommand { get; }
+
+        public ICommand RefreshLaunchCommandCommand { get; }
 
         public ICommand OpenStorageFolderCommand { get; }
 
@@ -384,6 +398,18 @@ namespace CarbonLauncher.ViewModels
             }
         }
 
+        public CarbonLauncher.Models.LaunchCommand CurrentLaunchCommand
+        {
+            get => _currentLaunchCommand;
+            private set
+            {
+                _currentLaunchCommand = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(LaunchCommandStatusText));
+                OnPropertyChanged(nameof(LaunchCommandPreviewText));
+            }
+        }
+
         public string LaunchProfileNameText => CurrentLaunchProfile.ProfileName;
 
         public string LaunchJavaReadinessText => CurrentJava.IsDetected ? "Ready" : "Missing";
@@ -395,6 +421,23 @@ namespace CarbonLauncher.ViewModels
         public string LaunchStatusText => CurrentLaunchValidation.IsValid ? "Ready" : "Not Ready";
 
         public string LaunchValidationText => CurrentLaunchValidation.Summary;
+
+        public string LaunchCommandStatusText => CurrentLaunchCommand.IsBuildable ? "Buildable" : "Not Buildable";
+
+        public string LaunchCommandPreviewText
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(CurrentLaunchCommand.FullCommandPreview))
+                {
+                    return "-";
+                }
+
+                return CurrentLaunchCommand.FullCommandPreview.Length <= 260
+                    ? CurrentLaunchCommand.FullCommandPreview
+                    : CurrentLaunchCommand.FullCommandPreview.Substring(0, 260) + "...";
+            }
+        }
 
         public string PlayerIgnReadinessText => HasPlayerIgnError ? "Needs attention" : CurrentLaunchProfile.Username;
 
@@ -747,21 +790,42 @@ namespace CarbonLauncher.ViewModels
             }
 
             CurrentLaunchValidation = validation;
+            RefreshLaunchCommand();
             OnPropertyChanged(nameof(PlayerIgnReadinessText));
+        }
+
+        private void RefreshLaunchCommand()
+        {
+            CarbonLauncher.Models.LaunchCommand command = _launchCommandBuilderService.Build(
+                CurrentLaunchProfile,
+                CurrentJava,
+                CurrentMinecraftDirectory,
+                CurrentClientJar,
+                SelectedVersion);
+
+            if (HasPlayerIgnError)
+            {
+                command.Errors.Add(PlayerIgnErrorText);
+                command.IsBuildable = false;
+            }
+
+            CurrentLaunchCommand = command;
         }
 
         private void ShowLaunchValidationModal()
         {
-            if (CurrentLaunchValidation.IsValid)
+            RefreshLaunchProfile();
+
+            if (CurrentLaunchCommand.IsBuildable)
             {
-                ShowModal("Launch Profile", "Launch profile is ready. Real launch pipeline is coming next.");
+                ShowModal("Launch Command", "Launch command is ready. Real process launch is next.");
                 return;
             }
 
-            string message = CurrentLaunchValidation.Errors.Count == 0
-                ? CurrentLaunchValidation.Summary
-                : string.Join("\n", CurrentLaunchValidation.Errors);
-            ShowModal("Launch Profile Not Ready", message);
+            string message = CurrentLaunchCommand.Errors.Count == 0
+                ? "Launch command is not buildable."
+                : string.Join("\n", CurrentLaunchCommand.Errors);
+            ShowModal("Launch Command Not Ready", message);
         }
 
         private static string ValidateOfflineIgn(string username)
