@@ -6,12 +6,18 @@ namespace CarbonLauncher.Services
 {
     public sealed class ClientJarResolverService
     {
-        private readonly string _clientRootDirectory;
+        private readonly LauncherStorageService _storageService;
+        private readonly LauncherStorageInfo _storageInfo;
 
         public ClientJarResolverService()
+            : this(new LauncherStorageService())
         {
-            string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            _clientRootDirectory = Path.Combine(appData, "CarbonLauncher", "client");
+        }
+
+        public ClientJarResolverService(LauncherStorageService storageService)
+        {
+            _storageService = storageService;
+            _storageInfo = _storageService.GetStorageInfo();
         }
 
         public ClientJarInfo Resolve(LauncherVersion selectedVersion)
@@ -40,7 +46,8 @@ namespace CarbonLauncher.Services
 
             try
             {
-                string versionDirectory = Path.Combine(_clientRootDirectory, versionId);
+                _storageService.EnsureStorage();
+                string versionDirectory = Path.Combine(_storageInfo.ClientDirectory, versionId);
                 Directory.CreateDirectory(versionDirectory);
 
                 string expectedFileName = GetExpectedFileName(selectedVersion);

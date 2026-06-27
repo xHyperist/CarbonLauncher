@@ -18,11 +18,23 @@ namespace CarbonLauncher.Services
             WriteIndented = true
         };
 
-        public string ConfigDirectory { get; } = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "CarbonLauncher");
+        private readonly LauncherStorageService _storageService;
+        private readonly LauncherStorageInfo _storageInfo;
 
-        public string ConfigPath => Path.Combine(ConfigDirectory, "config.json");
+        public LauncherConfigService()
+            : this(new LauncherStorageService())
+        {
+        }
+
+        public LauncherConfigService(LauncherStorageService storageService)
+        {
+            _storageService = storageService;
+            _storageInfo = _storageService.GetStorageInfo();
+        }
+
+        public string ConfigDirectory => _storageInfo.RootDirectory;
+
+        public string ConfigPath => _storageInfo.ConfigFilePath;
 
         public LauncherConfig Load()
         {
@@ -105,7 +117,7 @@ namespace CarbonLauncher.Services
 
         private void EnsureConfigDirectory()
         {
-            Directory.CreateDirectory(ConfigDirectory);
+            _storageService.EnsureStorage();
         }
 
         private void BackupBrokenConfig()

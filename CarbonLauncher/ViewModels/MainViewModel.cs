@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Collections.ObjectModel;
 using System.Text.RegularExpressions;
 using System.Windows.Input;
@@ -9,6 +10,7 @@ namespace CarbonLauncher.ViewModels
     public sealed class MainViewModel : ViewModelBase
     {
         private readonly LauncherConfigService _configService;
+        private readonly LauncherStorageService _storageService;
         private readonly JavaDetectionService _javaDetectionService;
         private readonly MinecraftDirectoryService _minecraftDirectoryService;
         private readonly LaunchProfileService _launchProfileService;
@@ -16,6 +18,7 @@ namespace CarbonLauncher.ViewModels
         private readonly ClientJarResolverService _clientJarResolverService;
         private readonly LauncherConfig _config;
         private readonly VersionManifest _versionManifest;
+        private LauncherStorageInfo _currentStorage;
         private LauncherVersion _selectedVersion;
         private JavaInfo _currentJava;
         private MinecraftDirectoryInfo _currentMinecraftDirectory;
@@ -35,12 +38,15 @@ namespace CarbonLauncher.ViewModels
 
         public MainViewModel()
         {
-            _configService = new LauncherConfigService();
+            _storageService = new LauncherStorageService();
+            _currentStorage = _storageService.EnsureStorage();
+            _storageService.CleanTempDirectory();
+            _configService = new LauncherConfigService(_storageService);
             _javaDetectionService = new JavaDetectionService();
             _minecraftDirectoryService = new MinecraftDirectoryService();
             _launchProfileService = new LaunchProfileService();
-            _versionManifestService = new VersionManifestService();
-            _clientJarResolverService = new ClientJarResolverService();
+            _versionManifestService = new VersionManifestService(_storageService);
+            _clientJarResolverService = new ClientJarResolverService(_storageService);
             _config = _configService.Load();
             _versionManifest = _versionManifestService.Load();
 
@@ -103,6 +109,7 @@ namespace CarbonLauncher.ViewModels
                 RefreshLaunchProfile();
             });
             RefreshLaunchProfileCommand = new RelayCommand(_ => RefreshLaunchProfile());
+            OpenStorageFolderCommand = new RelayCommand(_ => OpenStorageFolder());
             ShowComingSoonCommand = new RelayCommand(message => ShowModal("Coming Soon", message as string ?? "This feature is coming soon."));
             CloseModalCommand = new RelayCommand(_ => IsModalVisible = false);
 
@@ -133,6 +140,8 @@ namespace CarbonLauncher.ViewModels
         public ICommand CheckClientJarCommand { get; }
 
         public ICommand RefreshLaunchProfileCommand { get; }
+
+        public ICommand OpenStorageFolderCommand { get; }
 
         public ICommand ShowComingSoonCommand { get; }
 
@@ -219,6 +228,24 @@ namespace CarbonLauncher.ViewModels
         public string SelectedVersionDisplayText => string.IsNullOrWhiteSpace(SelectedVersion.DisplayName)
             ? SelectedVersion.MinecraftVersion
             : SelectedVersion.DisplayName;
+
+        public LauncherStorageInfo CurrentStorage
+        {
+            get => _currentStorage;
+            private set
+            {
+                _currentStorage = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(StorageStatusText));
+                OnPropertyChanged(nameof(StorageRootText));
+            }
+        }
+
+        public string StorageStatusText => CurrentStorage.IsReady ? "Ready" : "Error";
+
+        public string StorageRootText => string.IsNullOrWhiteSpace(CurrentStorage.RootDirectory)
+            ? "-"
+            : CurrentStorage.RootDirectory;
 
         public JavaInfo CurrentJava
         {
@@ -659,6 +686,30 @@ namespace CarbonLauncher.ViewModels
         private void RefreshClientJar()
         {
             CurrentClientJar = _clientJarResolverService.Resolve(SelectedVersion);
+        }
+
+        private void OpenStorageFolder()
+        {
+            CurrentStorage = _storageService.EnsureStorage();
+
+            if (!CurrentStorage.IsReady)
+            {
+                ShowModal("Storage Error", CurrentStorage.ErrorMessage);
+                return;
+            }
+
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = CurrentStorage.RootDirectory,
+                    UseShellExecute = true
+                });
+            }
+            catch
+            {
+                ShowModal("Storage Error", "Storage folder could not be opened.");
+            }
         }
 
         private void RefreshLaunchProfile()

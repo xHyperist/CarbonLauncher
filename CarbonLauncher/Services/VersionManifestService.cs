@@ -14,11 +14,23 @@ namespace CarbonLauncher.Services
             WriteIndented = true
         };
 
-        public string ManifestDirectory { get; } = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "CarbonLauncher");
+        private readonly LauncherStorageService _storageService;
+        private readonly LauncherStorageInfo _storageInfo;
 
-        public string ManifestPath => Path.Combine(ManifestDirectory, "versions.json");
+        public VersionManifestService()
+            : this(new LauncherStorageService())
+        {
+        }
+
+        public VersionManifestService(LauncherStorageService storageService)
+        {
+            _storageService = storageService;
+            _storageInfo = _storageService.GetStorageInfo();
+        }
+
+        public string ManifestDirectory => _storageInfo.RootDirectory;
+
+        public string ManifestPath => _storageInfo.VersionManifestPath;
 
         public VersionManifest Load()
         {
@@ -168,7 +180,7 @@ namespace CarbonLauncher.Services
 
         private void EnsureManifestDirectory()
         {
-            Directory.CreateDirectory(ManifestDirectory);
+            _storageService.EnsureStorage();
         }
 
         private void BackupBrokenManifest()
