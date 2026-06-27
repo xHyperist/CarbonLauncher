@@ -15,7 +15,8 @@ namespace CarbonLauncher.Services
             MinecraftDirectoryInfo minecraftDirectoryInfo,
             ClientJarInfo clientJarInfo,
             LauncherVersion selectedVersion,
-            LaunchSession launchSession)
+            LaunchSession launchSession,
+            MinecraftRuntimeInfo minecraftRuntimeInfo)
         {
             LaunchCommand command = new LaunchCommand
             {
@@ -23,35 +24,62 @@ namespace CarbonLauncher.Services
                 WorkingDirectory = string.IsNullOrWhiteSpace(profile.GameDirectory)
                     ? profile.MinecraftDirectory
                     : profile.GameDirectory,
-                MainClass = DefaultMainClass,
+                MainClass = string.IsNullOrWhiteSpace(minecraftRuntimeInfo.MainClass)
+                    ? DefaultMainClass
+                    : minecraftRuntimeInfo.MainClass,
                 JvmArguments = new List<string>(profile.JvmArguments),
-                ClasspathEntries = BuildClasspath(clientJarInfo),
-                GameArguments = BuildGameArguments(profile, launchSession)
+                ClasspathEntries = BuildClasspath(clientJarInfo, minecraftRuntimeInfo),
+                GameArguments = BuildGameArguments(profile, launchSession, minecraftRuntimeInfo)
             };
 
-            Validate(command, profile, javaInfo, minecraftDirectoryInfo, clientJarInfo, selectedVersion, launchSession);
+            Validate(command, profile, javaInfo, minecraftDirectoryInfo, clientJarInfo, selectedVersion, launchSession, minecraftRuntimeInfo);
             command.IsBuildable = command.Errors.Count == 0;
             command.FullCommandPreview = BuildPreview(command);
             return command;
         }
 
-        private static List<string> BuildClasspath(ClientJarInfo clientJarInfo)
+        private static List<string> BuildClasspath(ClientJarInfo clientJarInfo, MinecraftRuntimeInfo minecraftRuntimeInfo)
         {
             List<string> classpathEntries = new List<string>();
 
-            if (!string.IsNullOrWhiteSpace(clientJarInfo.JarPath))
+            foreach (string libraryPath in minecraftRuntimeInfo.LibraryPaths)
             {
-                classpathEntries.Add(clientJarInfo.JarPath);
+                AddClasspathEntry(classpathEntries, libraryPath);
             }
+
+            AddClasspathEntry(classpathEntries, minecraftRuntimeInfo.ClientJarPath);
+            AddClasspathEntry(classpathEntries, clientJarInfo.JarPath);
 
             return classpathEntries;
         }
 
-        private static List<string> BuildGameArguments(LaunchProfile profile, LaunchSession launchSession)
+        private static void AddClasspathEntry(List<string> classpathEntries, string path)
         {
-            string assetsDirectory = string.IsNullOrWhiteSpace(profile.MinecraftDirectory)
-                ? string.Empty
-                : Path.Combine(profile.MinecraftDirectory, "assets");
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return;
+            }
+
+            if (classpathEntries.Contains(path))
+            {
+                return;
+            }
+
+            classpathEntries.Add(path);
+        }
+
+        private static List<string> BuildGameArguments(
+            LaunchProfile profile,
+            LaunchSession launchSession,
+            MinecraftRuntimeInfo minecraftRuntimeInfo)
+        {
+            string assetsDirectory = string.IsNullOrWhiteSpace(minecraftRuntimeInfo.AssetsDirectory)
+                ? Path.Combine(profile.MinecraftDirectory, "assets")
+                : minecraftRuntimeInfo.AssetsDirectory;
+
+            string assetIndex = string.IsNullOrWhiteSpace(minecraftRuntimeInfo.AssetIndex)
+                ? "1.8"
+                : minecraftRuntimeInfo.AssetIndex;
 
             return new List<string>
             {
@@ -64,7 +92,7 @@ namespace CarbonLauncher.Services
                 "--assetsDir",
                 assetsDirectory,
                 "--assetIndex",
-                "1.8",
+                assetIndex,
                 "--uuid",
                 launchSession.Uuid,
                 "--accessToken",
@@ -81,7 +109,8 @@ namespace CarbonLauncher.Services
             MinecraftDirectoryInfo minecraftDirectoryInfo,
             ClientJarInfo clientJarInfo,
             LauncherVersion selectedVersion,
-            LaunchSession launchSession)
+            LaunchSession launchSession,
+            MinecraftRuntimeInfo minecraftRuntimeInfo)
         {
             if (string.IsNullOrWhiteSpace(command.JavaExecutablePath) ||
                 !File.Exists(command.JavaExecutablePath))
@@ -139,13 +168,26 @@ namespace CarbonLauncher.Services
                 command.Errors.Add("Main class is missing.");
             }
 
+            foreach (string error in minecraftRuntimeInfo.Errors)
+            {
+                command.Errors.Add(error);
+            }
+
             if (javaInfo.IsDetected && javaInfo.MajorVersion == 0)
             {
                 command.Warnings.Add("Java major version could not be parsed.");
             }
 
-            command.Warnings.Add("Minecraft libraries are not fully resolved yet.");
-            command.Warnings.Add("Assets index is not fully resolved yet.");
+            foreach (string warning in minecraftRuntimeInfo.Warnings)
+            {
+                command.Warnings.Add(warning);
+            }
+
+            if (minecraftRuntimeInfo.MissingLibraries.Count > 0)
+            {
+                command.Warnings.Add($"{minecraftRuntimeInfo.MissingLibraries.Count} library path(s) are missing from the classpath.");
+            }
+
             command.Warnings.Add("Offline launch session is not the same as a real authenticated session.");
             command.Warnings.Add("This command is preview only; the game process is not started.");
         }

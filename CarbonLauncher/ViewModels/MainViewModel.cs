@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 using System.Collections.ObjectModel;
 using System.Text.RegularExpressions;
 using System.Windows.Input;
@@ -13,6 +14,7 @@ namespace CarbonLauncher.ViewModels
         private readonly LauncherStorageService _storageService;
         private readonly JavaDetectionService _javaDetectionService;
         private readonly MinecraftDirectoryService _minecraftDirectoryService;
+        private readonly MinecraftRuntimeResolverService _minecraftRuntimeResolverService;
         private readonly LaunchProfileService _launchProfileService;
         private readonly LaunchSessionService _launchSessionService;
         private readonly LaunchCommandBuilderService _launchCommandBuilderService;
@@ -24,6 +26,7 @@ namespace CarbonLauncher.ViewModels
         private LauncherVersion _selectedVersion;
         private JavaInfo _currentJava;
         private MinecraftDirectoryInfo _currentMinecraftDirectory;
+        private MinecraftRuntimeInfo _currentMinecraftRuntime;
         private ClientJarInfo _currentClientJar;
         private LaunchProfile _currentLaunchProfile;
         private LaunchValidationResult _currentLaunchValidation;
@@ -48,6 +51,7 @@ namespace CarbonLauncher.ViewModels
             _configService = new LauncherConfigService(_storageService);
             _javaDetectionService = new JavaDetectionService();
             _minecraftDirectoryService = new MinecraftDirectoryService();
+            _minecraftRuntimeResolverService = new MinecraftRuntimeResolverService(_storageService);
             _launchProfileService = new LaunchProfileService();
             _launchSessionService = new LaunchSessionService();
             _launchCommandBuilderService = new LaunchCommandBuilderService();
@@ -89,6 +93,11 @@ namespace CarbonLauncher.ViewModels
                 Source = "Not Found",
                 ErrorMessage = "Minecraft directory has not been checked yet."
             };
+            _currentMinecraftRuntime = new MinecraftRuntimeInfo
+            {
+                IsResolved = false,
+                MinecraftVersion = _selectedVersion.MinecraftVersion
+            };
             _currentClientJar = new ClientJarInfo
             {
                 Status = "Missing",
@@ -127,6 +136,11 @@ namespace CarbonLauncher.ViewModels
                 RefreshLaunchProfile();
             });
             RefreshLaunchProfileCommand = new RelayCommand(_ => RefreshLaunchProfile());
+            RefreshMinecraftRuntimeCommand = new RelayCommand(_ =>
+            {
+                RefreshMinecraftRuntime();
+                RefreshLaunchCommand();
+            });
             RefreshLaunchSessionCommand = new RelayCommand(_ =>
             {
                 RefreshLaunchSession();
@@ -168,6 +182,8 @@ namespace CarbonLauncher.ViewModels
         public ICommand CheckClientJarCommand { get; }
 
         public ICommand RefreshLaunchProfileCommand { get; }
+
+        public ICommand RefreshMinecraftRuntimeCommand { get; }
 
         public ICommand RefreshLaunchSessionCommand { get; }
 
@@ -324,6 +340,31 @@ namespace CarbonLauncher.ViewModels
                 OnPropertyChanged(nameof(MinecraftDirectorySourceText));
                 OnPropertyChanged(nameof(MinecraftDirectoryDetailsText));
                 OnPropertyChanged(nameof(LaunchMinecraftDirectoryReadinessText));
+            }
+        }
+
+        public MinecraftRuntimeInfo CurrentMinecraftRuntime
+        {
+            get => _currentMinecraftRuntime;
+            private set
+            {
+                _currentMinecraftRuntime = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(MinecraftRuntimeStatusText));
+                OnPropertyChanged(nameof(MinecraftRuntimeSummaryText));
+            }
+        }
+
+        public string MinecraftRuntimeStatusText => CurrentMinecraftRuntime.IsResolved ? "Resolved" : "Not Resolved";
+
+        public string MinecraftRuntimeSummaryText
+        {
+            get
+            {
+                string versionJson = File.Exists(CurrentMinecraftRuntime.VersionJsonPath) ? "Found" : "Missing";
+                string assets = File.Exists(CurrentMinecraftRuntime.AssetIndexPath) ? "Found" : "Missing";
+                string natives = Directory.Exists(CurrentMinecraftRuntime.NativesDirectory) ? "Prepared" : "Missing";
+                return $"Version JSON: {versionJson}, Libraries: {CurrentMinecraftRuntime.LibraryPaths.Count} found / {CurrentMinecraftRuntime.MissingLibraries.Count} missing, Assets: {assets}, Natives: {natives}";
             }
         }
 
@@ -797,6 +838,11 @@ namespace CarbonLauncher.ViewModels
             CurrentClientJar = _clientJarResolverService.Resolve(SelectedVersion);
         }
 
+        private void RefreshMinecraftRuntime()
+        {
+            CurrentMinecraftRuntime = _minecraftRuntimeResolverService.Resolve(CurrentMinecraftDirectory, SelectedVersion);
+        }
+
         private void OpenStorageFolder()
         {
             CurrentStorage = _storageService.EnsureStorage();
@@ -856,6 +902,7 @@ namespace CarbonLauncher.ViewModels
             }
 
             CurrentLaunchValidation = validation;
+            RefreshMinecraftRuntime();
             RefreshLaunchSession();
             RefreshLaunchCommand();
             OnPropertyChanged(nameof(PlayerIgnReadinessText));
@@ -876,7 +923,8 @@ namespace CarbonLauncher.ViewModels
                 CurrentMinecraftDirectory,
                 CurrentClientJar,
                 SelectedVersion,
-                CurrentLaunchSession);
+                CurrentLaunchSession,
+                CurrentMinecraftRuntime);
 
             CurrentLaunchCommand = command;
         }
@@ -887,7 +935,7 @@ namespace CarbonLauncher.ViewModels
 
             if (CurrentLaunchCommand.IsBuildable)
             {
-                ShowModal("Launch Command", "Launch command is ready. Real process launch is next.");
+                ShowModal("Launch Command", "Launch command and runtime are ready. Real process launch is next.");
                 return;
             }
 

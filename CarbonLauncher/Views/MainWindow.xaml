@@ -320,11 +320,23 @@
                                                        Foreground="{StaticResource CarbonMutedTextBrush}" />
                                             <TextBlock Grid.Row="10"
                                                        Grid.Column="1"
-                                                       Grid.ColumnSpan="3"
                                                        Text="{Binding LaunchSessionUuidText}"
                                                        Foreground="{StaticResource CarbonTextBrush}"
                                                        FontWeight="SemiBold" />
+                                            <TextBlock Grid.Row="10"
+                                                       Grid.Column="2"
+                                                       Text="Runtime"
+                                                       Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                            <TextBlock Grid.Row="10"
+                                                       Grid.Column="3"
+                                                       Text="{Binding MinecraftRuntimeStatusText}"
+                                                       Foreground="{StaticResource CarbonTextBrush}"
+                                                       FontWeight="SemiBold" />
                                         </Grid>
+                                        <TextBlock Text="{Binding MinecraftRuntimeSummaryText}"
+                                                   Foreground="{StaticResource CarbonMutedTextBrush}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,10,0,0" />
                                         <TextBlock Text="{Binding CurrentLaunchProfile.AllocatedMemoryMb, StringFormat=Memory: {0} MB}"
                                                    Foreground="{StaticResource CarbonMutedTextBrush}"
                                                    Margin="0,10,0,0" />
@@ -380,11 +392,17 @@
                                                    TextWrapping="Wrap"
                                                    MaxHeight="54"
                                                    Margin="0,10,0,12" />
-                                        <Button Style="{StaticResource GhostButtonStyle}"
-                                                Content="Refresh Command"
-                                                Command="{Binding RefreshLaunchCommandCommand}"
-                                                MinWidth="150"
-                                                HorizontalAlignment="Left" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Style="{StaticResource GhostButtonStyle}"
+                                                    Content="Refresh Command"
+                                                    Command="{Binding RefreshLaunchCommandCommand}"
+                                                    MinWidth="150" />
+                                            <Button Style="{StaticResource GhostButtonStyle}"
+                                                    Content="Refresh Runtime"
+                                                    Command="{Binding RefreshMinecraftRuntimeCommand}"
+                                                    MinWidth="150"
+                                                    Margin="12,0,0,0" />
+                                        </StackPanel>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
