@@ -226,6 +226,10 @@
                                                 <RowDefinition Height="Auto" />
                                                 <RowDefinition Height="8" />
                                                 <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="8" />
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="8" />
+                                                <RowDefinition Height="Auto" />
                                             </Grid.RowDefinitions>
 
                                             <TextBlock Text="Profile"
@@ -283,6 +287,41 @@
                                             <TextBlock Grid.Row="6"
                                                        Grid.Column="1"
                                                        Text="{Binding LaunchClientJarReadinessText}"
+                                                       Foreground="{StaticResource CarbonTextBrush}"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Grid.Row="6"
+                                                       Grid.Column="2"
+                                                       Text="Session"
+                                                       Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                            <TextBlock Grid.Row="6"
+                                                       Grid.Column="3"
+                                                       Text="{Binding LaunchSessionStatusText}"
+                                                       Foreground="{StaticResource CarbonTextBrush}"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Grid.Row="8"
+                                                       Text="Username"
+                                                       Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                            <TextBlock Grid.Row="8"
+                                                       Grid.Column="1"
+                                                       Text="{Binding LaunchSessionUsernameText}"
+                                                       Foreground="{StaticResource CarbonTextBrush}"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Grid.Row="8"
+                                                       Grid.Column="2"
+                                                       Text="Auth"
+                                                       Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                            <TextBlock Grid.Row="8"
+                                                       Grid.Column="3"
+                                                       Text="{Binding LaunchSessionAuthText}"
+                                                       Foreground="{StaticResource CarbonTextBrush}"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Grid.Row="10"
+                                                       Text="UUID"
+                                                       Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                            <TextBlock Grid.Row="10"
+                                                       Grid.Column="1"
+                                                       Grid.ColumnSpan="3"
+                                                       Text="{Binding LaunchSessionUuidText}"
                                                        Foreground="{StaticResource CarbonTextBrush}"
                                                        FontWeight="SemiBold" />
                                         </Grid>
@@ -429,8 +468,13 @@
                         </Border.Style>
                         <StackPanel MaxWidth="520"
                                     HorizontalAlignment="Left">
-                            <TextBlock Text="Player IGN"
+                           <TextBlock Text="Player IGN"
                                        Style="{StaticResource SectionLabelTextStyle}" />
+                            <TextBlock Text="Manual IGN is used for offline guest mode."
+                                       Foreground="{StaticResource CarbonMutedTextBrush}"
+                                       FontSize="13"
+                                       TextWrapping="Wrap"
+                                       Margin="0,8,0,0" />
                             <TextBox Text="{Binding PlayerIgnInput, UpdateSourceTrigger=PropertyChanged}"
                                      Margin="0,10,0,6">
                                 <TextBox.Style>

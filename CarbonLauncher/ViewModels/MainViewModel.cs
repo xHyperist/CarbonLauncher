@@ -14,6 +14,7 @@ namespace CarbonLauncher.ViewModels
         private readonly JavaDetectionService _javaDetectionService;
         private readonly MinecraftDirectoryService _minecraftDirectoryService;
         private readonly LaunchProfileService _launchProfileService;
+        private readonly LaunchSessionService _launchSessionService;
         private readonly LaunchCommandBuilderService _launchCommandBuilderService;
         private readonly VersionManifestService _versionManifestService;
         private readonly ClientJarResolverService _clientJarResolverService;
@@ -26,6 +27,7 @@ namespace CarbonLauncher.ViewModels
         private ClientJarInfo _currentClientJar;
         private LaunchProfile _currentLaunchProfile;
         private LaunchValidationResult _currentLaunchValidation;
+        private LaunchSession _currentLaunchSession;
         private CarbonLauncher.Models.LaunchCommand _currentLaunchCommand;
         private string _currentPage;
         private string _guestUsername;
@@ -47,6 +49,7 @@ namespace CarbonLauncher.ViewModels
             _javaDetectionService = new JavaDetectionService();
             _minecraftDirectoryService = new MinecraftDirectoryService();
             _launchProfileService = new LaunchProfileService();
+            _launchSessionService = new LaunchSessionService();
             _launchCommandBuilderService = new LaunchCommandBuilderService();
             _versionManifestService = new VersionManifestService(_storageService);
             _clientJarResolverService = new ClientJarResolverService(_storageService);
@@ -97,6 +100,14 @@ namespace CarbonLauncher.ViewModels
                 IsValid = false,
                 Summary = "Launch profile has not been checked yet."
             };
+            _currentLaunchSession = new LaunchSession
+            {
+                IsGuestMode = true,
+                SessionType = "offline",
+                AccessToken = "0",
+                UserType = "legacy",
+                ErrorMessage = "Launch session has not been created yet."
+            };
             _currentLaunchCommand = new CarbonLauncher.Models.LaunchCommand
             {
                 IsBuildable = false
@@ -116,6 +127,11 @@ namespace CarbonLauncher.ViewModels
                 RefreshLaunchProfile();
             });
             RefreshLaunchProfileCommand = new RelayCommand(_ => RefreshLaunchProfile());
+            RefreshLaunchSessionCommand = new RelayCommand(_ =>
+            {
+                RefreshLaunchSession();
+                RefreshLaunchCommand();
+            });
             RefreshLaunchCommandCommand = new RelayCommand(_ =>
             {
                 RefreshClientJar();
@@ -152,6 +168,8 @@ namespace CarbonLauncher.ViewModels
         public ICommand CheckClientJarCommand { get; }
 
         public ICommand RefreshLaunchProfileCommand { get; }
+
+        public ICommand RefreshLaunchSessionCommand { get; }
 
         public ICommand RefreshLaunchCommandCommand { get; }
 
@@ -398,6 +416,20 @@ namespace CarbonLauncher.ViewModels
             }
         }
 
+        public LaunchSession CurrentLaunchSession
+        {
+            get => _currentLaunchSession;
+            private set
+            {
+                _currentLaunchSession = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(LaunchSessionStatusText));
+                OnPropertyChanged(nameof(LaunchSessionUsernameText));
+                OnPropertyChanged(nameof(LaunchSessionUuidText));
+                OnPropertyChanged(nameof(LaunchSessionAuthText));
+            }
+        }
+
         public CarbonLauncher.Models.LaunchCommand CurrentLaunchCommand
         {
             get => _currentLaunchCommand;
@@ -421,6 +453,40 @@ namespace CarbonLauncher.ViewModels
         public string LaunchStatusText => CurrentLaunchValidation.IsValid ? "Ready" : "Not Ready";
 
         public string LaunchValidationText => CurrentLaunchValidation.Summary;
+
+        public string LaunchSessionStatusText
+        {
+            get
+            {
+                if (!string.IsNullOrWhiteSpace(CurrentLaunchSession.ErrorMessage))
+                {
+                    return "Invalid";
+                }
+
+                return CurrentLaunchSession.IsGuestMode ? "Guest / Offline" : "Authenticated";
+            }
+        }
+
+        public string LaunchSessionUsernameText => string.IsNullOrWhiteSpace(CurrentLaunchSession.ErrorMessage)
+            ? CurrentLaunchSession.Username
+            : "Needs attention";
+
+        public string LaunchSessionUuidText
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(CurrentLaunchSession.Uuid))
+                {
+                    return "-";
+                }
+
+                return CurrentLaunchSession.Uuid.Length <= 13
+                    ? CurrentLaunchSession.Uuid
+                    : CurrentLaunchSession.Uuid.Substring(0, 13) + "...";
+            }
+        }
+
+        public string LaunchSessionAuthText => CurrentLaunchSession.IsAuthenticated ? "Authenticated" : "Offline Mode";
 
         public string LaunchCommandStatusText => CurrentLaunchCommand.IsBuildable ? "Buildable" : "Not Buildable";
 
@@ -790,8 +856,16 @@ namespace CarbonLauncher.ViewModels
             }
 
             CurrentLaunchValidation = validation;
+            RefreshLaunchSession();
             RefreshLaunchCommand();
             OnPropertyChanged(nameof(PlayerIgnReadinessText));
+        }
+
+        private void RefreshLaunchSession()
+        {
+            CurrentLaunchSession = HasPlayerIgnError
+                ? _launchSessionService.CreateInvalidGuestSession(PlayerIgnInput, PlayerIgnErrorText)
+                : _launchSessionService.CreateGuestSession(CurrentLaunchProfile.Username);
         }
 
         private void RefreshLaunchCommand()
@@ -801,13 +875,8 @@ namespace CarbonLauncher.ViewModels
                 CurrentJava,
                 CurrentMinecraftDirectory,
                 CurrentClientJar,
-                SelectedVersion);
-
-            if (HasPlayerIgnError)
-            {
-                command.Errors.Add(PlayerIgnErrorText);
-                command.IsBuildable = false;
-            }
+                SelectedVersion,
+                CurrentLaunchSession);
 
             CurrentLaunchCommand = command;
         }

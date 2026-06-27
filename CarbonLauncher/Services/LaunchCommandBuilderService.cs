@@ -14,7 +14,8 @@ namespace CarbonLauncher.Services
             JavaInfo javaInfo,
             MinecraftDirectoryInfo minecraftDirectoryInfo,
             ClientJarInfo clientJarInfo,
-            LauncherVersion selectedVersion)
+            LauncherVersion selectedVersion,
+            LaunchSession launchSession)
         {
             LaunchCommand command = new LaunchCommand
             {
@@ -25,10 +26,10 @@ namespace CarbonLauncher.Services
                 MainClass = DefaultMainClass,
                 JvmArguments = new List<string>(profile.JvmArguments),
                 ClasspathEntries = BuildClasspath(clientJarInfo),
-                GameArguments = BuildGameArguments(profile)
+                GameArguments = BuildGameArguments(profile, launchSession)
             };
 
-            Validate(command, profile, javaInfo, minecraftDirectoryInfo, clientJarInfo, selectedVersion);
+            Validate(command, profile, javaInfo, minecraftDirectoryInfo, clientJarInfo, selectedVersion, launchSession);
             command.IsBuildable = command.Errors.Count == 0;
             command.FullCommandPreview = BuildPreview(command);
             return command;
@@ -46,7 +47,7 @@ namespace CarbonLauncher.Services
             return classpathEntries;
         }
 
-        private static List<string> BuildGameArguments(LaunchProfile profile)
+        private static List<string> BuildGameArguments(LaunchProfile profile, LaunchSession launchSession)
         {
             string assetsDirectory = string.IsNullOrWhiteSpace(profile.MinecraftDirectory)
                 ? string.Empty
@@ -55,7 +56,7 @@ namespace CarbonLauncher.Services
             return new List<string>
             {
                 "--username",
-                profile.Username,
+                launchSession.Username,
                 "--version",
                 profile.MinecraftVersion,
                 "--gameDir",
@@ -65,11 +66,11 @@ namespace CarbonLauncher.Services
                 "--assetIndex",
                 "1.8",
                 "--uuid",
-                "offline",
+                launchSession.Uuid,
                 "--accessToken",
-                "0",
+                launchSession.AccessToken,
                 "--userType",
-                "legacy"
+                launchSession.UserType
             };
         }
 
@@ -79,7 +80,8 @@ namespace CarbonLauncher.Services
             JavaInfo javaInfo,
             MinecraftDirectoryInfo minecraftDirectoryInfo,
             ClientJarInfo clientJarInfo,
-            LauncherVersion selectedVersion)
+            LauncherVersion selectedVersion,
+            LaunchSession launchSession)
         {
             if (string.IsNullOrWhiteSpace(command.JavaExecutablePath) ||
                 !File.Exists(command.JavaExecutablePath))
@@ -114,10 +116,22 @@ namespace CarbonLauncher.Services
                     : clientJarInfo.ErrorMessage);
             }
 
-            string usernameError = ValidateOfflineIgn(profile.Username);
-            if (!string.IsNullOrWhiteSpace(usernameError))
+            if (!string.IsNullOrWhiteSpace(launchSession.ErrorMessage))
             {
-                command.Errors.Add(usernameError);
+                command.Errors.Add(launchSession.ErrorMessage);
+            }
+            else
+            {
+                string usernameError = ValidateOfflineIgn(launchSession.Username);
+                if (!string.IsNullOrWhiteSpace(usernameError))
+                {
+                    command.Errors.Add(usernameError);
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(launchSession.Uuid))
+            {
+                command.Errors.Add("Launch session UUID is missing.");
             }
 
             if (string.IsNullOrWhiteSpace(command.MainClass))
