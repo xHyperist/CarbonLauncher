@@ -1,7 +1,10 @@
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Collections.ObjectModel;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 using CarbonLauncher.Models;
 using CarbonLauncher.Services;
@@ -18,6 +21,7 @@ namespace CarbonLauncher.ViewModels
         private readonly LaunchProfileService _launchProfileService;
         private readonly LaunchSessionService _launchSessionService;
         private readonly LaunchCommandBuilderService _launchCommandBuilderService;
+        private readonly LaunchProcessService _launchProcessService;
         private readonly VersionManifestService _versionManifestService;
         private readonly ClientJarResolverService _clientJarResolverService;
         private readonly LauncherConfig _config;
@@ -32,6 +36,7 @@ namespace CarbonLauncher.ViewModels
         private LaunchValidationResult _currentLaunchValidation;
         private LaunchSession _currentLaunchSession;
         private CarbonLauncher.Models.LaunchCommand _currentLaunchCommand;
+        private LaunchProcessInfo _currentLaunchProcess;
         private string _currentPage;
         private string _guestUsername;
         private string _playerIgnInput;
@@ -55,6 +60,8 @@ namespace CarbonLauncher.ViewModels
             _launchProfileService = new LaunchProfileService();
             _launchSessionService = new LaunchSessionService();
             _launchCommandBuilderService = new LaunchCommandBuilderService();
+            _launchProcessService = new LaunchProcessService(_storageService);
+            _launchProcessService.ProcessExited += OnLaunchProcessExited;
             _versionManifestService = new VersionManifestService(_storageService);
             _clientJarResolverService = new ClientJarResolverService(_storageService);
             _config = _configService.Load();
@@ -121,10 +128,12 @@ namespace CarbonLauncher.ViewModels
             {
                 IsBuildable = false
             };
+            _currentLaunchProcess = new LaunchProcessInfo();
             _modalTitle = "Carbon Launcher";
             _modalMessage = string.Empty;
 
-            LaunchCommand = new RelayCommand(_ => ShowLaunchValidationModal());
+            StartLaunchCommand = new RelayCommand(_ => _ = StartLaunchAsync());
+            LaunchCommand = StartLaunchCommand;
             NavigateCommand = new RelayCommand(page => Navigate(page as string));
             SelectVersionCommand = new RelayCommand(version => SelectVersion(version as LauncherVersion));
             SaveAccountCommand = new RelayCommand(_ => SaveAccount());
@@ -168,6 +177,8 @@ namespace CarbonLauncher.ViewModels
         public ObservableCollection<LauncherVersion> Versions { get; }
 
         public ICommand LaunchCommand { get; }
+
+        public ICommand StartLaunchCommand { get; }
 
         public ICommand NavigateCommand { get; }
 
@@ -483,6 +494,18 @@ namespace CarbonLauncher.ViewModels
             }
         }
 
+        public LaunchProcessInfo CurrentLaunchProcess
+        {
+            get => _currentLaunchProcess;
+            private set
+            {
+                _currentLaunchProcess = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(LaunchProcessStatusText));
+                OnPropertyChanged(nameof(LaunchLogPathText));
+            }
+        }
+
         public string LaunchProfileNameText => CurrentLaunchProfile.ProfileName;
 
         public string LaunchJavaReadinessText => CurrentJava.IsDetected ? "Ready" : "Missing";
@@ -530,6 +553,26 @@ namespace CarbonLauncher.ViewModels
         public string LaunchSessionAuthText => CurrentLaunchSession.IsAuthenticated ? "Authenticated" : "Offline Mode";
 
         public string LaunchCommandStatusText => CurrentLaunchCommand.IsBuildable ? "Buildable" : "Not Buildable";
+
+        public string LaunchProcessStatusText
+        {
+            get
+            {
+                if (CurrentLaunchProcess.ProcessId.HasValue &&
+                    (CurrentLaunchProcess.IsRunning || CurrentLaunchProcess.HasStarted))
+                {
+                    return $"{CurrentLaunchProcess.Status} (PID {CurrentLaunchProcess.ProcessId.Value})";
+                }
+
+                return string.IsNullOrWhiteSpace(CurrentLaunchProcess.Status)
+                    ? "Not Running"
+                    : CurrentLaunchProcess.Status;
+            }
+        }
+
+        public string LaunchLogPathText => string.IsNullOrWhiteSpace(CurrentLaunchProcess.LogFilePath)
+            ? "Log: -"
+            : $"Log: {CurrentLaunchProcess.LogFilePath}";
 
         public string LaunchCommandPreviewText
         {
@@ -929,20 +972,67 @@ namespace CarbonLauncher.ViewModels
             CurrentLaunchCommand = command;
         }
 
-        private void ShowLaunchValidationModal()
+        private async Task StartLaunchAsync()
         {
-            RefreshLaunchProfile();
-
-            if (CurrentLaunchCommand.IsBuildable)
+            try
             {
-                ShowModal("Launch Command", "Launch command and runtime are ready. Real process launch is next.");
+                if (CurrentLaunchProcess.IsRunning)
+                {
+                    ShowModal("Launch", "Minecraft is already running.");
+                    return;
+                }
+
+                RefreshLaunchProfile();
+
+                if (!CurrentLaunchCommand.IsBuildable)
+                {
+                    string errors = CurrentLaunchCommand.Errors.Count == 0
+                        ? "Launch command is not buildable."
+                        : string.Join("\n", CurrentLaunchCommand.Errors);
+                    ShowModal("Launch Command Not Ready", errors);
+                    return;
+                }
+
+                CurrentLaunchProcess = new LaunchProcessInfo
+                {
+                    Status = "Starting",
+                    StartedAt = DateTime.Now
+                };
+
+                LaunchProcessInfo processInfo = await _launchProcessService.StartAsync(CurrentLaunchCommand, CurrentLaunchProfile);
+                CurrentLaunchProcess = processInfo;
+
+                if (processInfo.HasStarted)
+                {
+                    ShowModal("Launch", "Minecraft process started.");
+                    return;
+                }
+
+                ShowModal("Launch Error", string.IsNullOrWhiteSpace(processInfo.ErrorMessage)
+                    ? "Minecraft process could not be started."
+                    : processInfo.ErrorMessage);
+            }
+            catch (Exception ex)
+            {
+                CurrentLaunchProcess = new LaunchProcessInfo
+                {
+                    Status = "Error",
+                    ErrorMessage = ex.Message
+                };
+                ShowModal("Launch Error", ex.Message);
+            }
+        }
+
+        private void OnLaunchProcessExited(LaunchProcessInfo processInfo)
+        {
+            if (Application.Current?.Dispatcher != null &&
+                !Application.Current.Dispatcher.CheckAccess())
+            {
+                Application.Current.Dispatcher.Invoke(() => CurrentLaunchProcess = processInfo);
                 return;
             }
 
-            string message = CurrentLaunchCommand.Errors.Count == 0
-                ? "Launch command is not buildable."
-                : string.Join("\n", CurrentLaunchCommand.Errors);
-            ShowModal("Launch Command Not Ready", message);
+            CurrentLaunchProcess = processInfo;
         }
 
         private static string ValidateOfflineIgn(string username)
