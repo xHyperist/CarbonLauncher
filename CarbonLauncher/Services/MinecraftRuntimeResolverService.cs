@@ -159,6 +159,8 @@ namespace CarbonLauncher.Services
             }
 
             string libraryName = nameElement.GetString() ?? string.Empty;
+            ReadNativeLibrary(runtimeInfo, libraryElement, libraryName);
+
             string libraryPath = ResolveMavenLibraryPath(runtimeInfo.LibrariesDirectory, libraryName);
 
             if (string.IsNullOrWhiteSpace(libraryPath))
@@ -173,6 +175,73 @@ namespace CarbonLauncher.Services
             }
 
             runtimeInfo.MissingLibraries.Add(libraryName);
+        }
+
+        private static void ReadNativeLibrary(
+            MinecraftRuntimeInfo runtimeInfo,
+            JsonElement libraryElement,
+            string libraryName)
+        {
+            string classifier = GetWindowsNativeClassifier(libraryElement);
+            if (string.IsNullOrWhiteSpace(classifier))
+            {
+                return;
+            }
+
+            string nativeJarPath = GetNativeJarPathFromDownloads(runtimeInfo.LibrariesDirectory, libraryElement, classifier);
+            if (string.IsNullOrWhiteSpace(nativeJarPath))
+            {
+                nativeJarPath = ResolveMavenLibraryPath(runtimeInfo.LibrariesDirectory, $"{libraryName}:{classifier}");
+            }
+
+            if (string.IsNullOrWhiteSpace(nativeJarPath))
+            {
+                return;
+            }
+
+            if (File.Exists(nativeJarPath))
+            {
+                runtimeInfo.NativeLibraryJarPaths.Add(nativeJarPath);
+                return;
+            }
+
+            runtimeInfo.MissingNativeLibraryJarPaths.Add(nativeJarPath);
+        }
+
+        private static string GetWindowsNativeClassifier(JsonElement libraryElement)
+        {
+            if (!libraryElement.TryGetProperty("natives", out JsonElement nativesElement) ||
+                !nativesElement.TryGetProperty("windows", out JsonElement windowsElement))
+            {
+                return string.Empty;
+            }
+
+            string classifier = windowsElement.GetString() ?? string.Empty;
+            return classifier.Replace("${arch}", Environment.Is64BitOperatingSystem ? "64" : "32");
+        }
+
+        private static string GetNativeJarPathFromDownloads(
+            string librariesDirectory,
+            JsonElement libraryElement,
+            string classifier)
+        {
+            if (!libraryElement.TryGetProperty("downloads", out JsonElement downloadsElement) ||
+                !downloadsElement.TryGetProperty("classifiers", out JsonElement classifiersElement) ||
+                !classifiersElement.TryGetProperty(classifier, out JsonElement nativeDownloadElement) ||
+                !nativeDownloadElement.TryGetProperty("path", out JsonElement pathElement))
+            {
+                return string.Empty;
+            }
+
+            string relativePath = pathElement.GetString() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(relativePath))
+            {
+                return string.Empty;
+            }
+
+            return Path.Combine(
+                librariesDirectory,
+                relativePath.Replace('/', Path.DirectorySeparatorChar));
         }
 
         private static string ResolveMavenLibraryPath(string librariesDirectory, string libraryName)

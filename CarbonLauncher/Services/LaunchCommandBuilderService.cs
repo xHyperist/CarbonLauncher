@@ -27,7 +27,7 @@ namespace CarbonLauncher.Services
                 MainClass = string.IsNullOrWhiteSpace(minecraftRuntimeInfo.MainClass)
                     ? DefaultMainClass
                     : minecraftRuntimeInfo.MainClass,
-                JvmArguments = new List<string>(profile.JvmArguments),
+                JvmArguments = BuildJvmArguments(profile, minecraftRuntimeInfo),
                 ClasspathEntries = BuildClasspath(clientJarInfo, minecraftRuntimeInfo),
                 GameArguments = BuildGameArguments(profile, launchSession, minecraftRuntimeInfo)
             };
@@ -36,6 +36,41 @@ namespace CarbonLauncher.Services
             command.IsBuildable = command.Errors.Count == 0;
             command.FullCommandPreview = BuildPreview(command);
             return command;
+        }
+
+        private static List<string> BuildJvmArguments(LaunchProfile profile, MinecraftRuntimeInfo minecraftRuntimeInfo)
+        {
+            List<string> jvmArguments = new List<string>(profile.JvmArguments);
+
+            AddJvmArgumentIfMissing(
+                jvmArguments,
+                "-Djava.library.path=",
+                $"-Djava.library.path={minecraftRuntimeInfo.NativesDirectory}");
+            AddJvmArgumentIfMissing(
+                jvmArguments,
+                "-Dorg.lwjgl.librarypath=",
+                $"-Dorg.lwjgl.librarypath={minecraftRuntimeInfo.NativesDirectory}");
+
+            return jvmArguments;
+        }
+
+        private static void AddJvmArgumentIfMissing(
+            List<string> jvmArguments,
+            string prefix,
+            string argument)
+        {
+            foreach (string existingArgument in jvmArguments)
+            {
+                if (existingArgument.StartsWith(prefix, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(argument))
+            {
+                jvmArguments.Add(argument);
+            }
         }
 
         private static List<string> BuildClasspath(ClientJarInfo clientJarInfo, MinecraftRuntimeInfo minecraftRuntimeInfo)
@@ -166,6 +201,11 @@ namespace CarbonLauncher.Services
             if (string.IsNullOrWhiteSpace(command.MainClass))
             {
                 command.Errors.Add("Main class is missing.");
+            }
+
+            if (!minecraftRuntimeInfo.AreNativesPrepared)
+            {
+                command.Errors.Add("Native libraries are not prepared.");
             }
 
             foreach (string error in minecraftRuntimeInfo.Errors)

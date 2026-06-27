@@ -18,6 +18,7 @@ namespace CarbonLauncher.ViewModels
         private readonly JavaDetectionService _javaDetectionService;
         private readonly MinecraftDirectoryService _minecraftDirectoryService;
         private readonly MinecraftRuntimeResolverService _minecraftRuntimeResolverService;
+        private readonly NativeLibraryExtractorService _nativeLibraryExtractorService;
         private readonly LaunchProfileService _launchProfileService;
         private readonly LaunchSessionService _launchSessionService;
         private readonly LaunchCommandBuilderService _launchCommandBuilderService;
@@ -57,6 +58,7 @@ namespace CarbonLauncher.ViewModels
             _javaDetectionService = new JavaDetectionService();
             _minecraftDirectoryService = new MinecraftDirectoryService();
             _minecraftRuntimeResolverService = new MinecraftRuntimeResolverService(_storageService);
+            _nativeLibraryExtractorService = new NativeLibraryExtractorService();
             _launchProfileService = new LaunchProfileService();
             _launchSessionService = new LaunchSessionService();
             _launchCommandBuilderService = new LaunchCommandBuilderService();
@@ -374,7 +376,9 @@ namespace CarbonLauncher.ViewModels
             {
                 string versionJson = File.Exists(CurrentMinecraftRuntime.VersionJsonPath) ? "Found" : "Missing";
                 string assets = File.Exists(CurrentMinecraftRuntime.AssetIndexPath) ? "Found" : "Missing";
-                string natives = Directory.Exists(CurrentMinecraftRuntime.NativesDirectory) ? "Prepared" : "Missing";
+                string natives = CurrentMinecraftRuntime.AreNativesPrepared
+                    ? $"Prepared ({CurrentMinecraftRuntime.ExtractedNativeFiles.Count})"
+                    : "Missing";
                 return $"Version JSON: {versionJson}, Libraries: {CurrentMinecraftRuntime.LibraryPaths.Count} found / {CurrentMinecraftRuntime.MissingLibraries.Count} missing, Assets: {assets}, Natives: {natives}";
             }
         }
@@ -883,7 +887,8 @@ namespace CarbonLauncher.ViewModels
 
         private void RefreshMinecraftRuntime()
         {
-            CurrentMinecraftRuntime = _minecraftRuntimeResolverService.Resolve(CurrentMinecraftDirectory, SelectedVersion);
+            MinecraftRuntimeInfo runtimeInfo = _minecraftRuntimeResolverService.Resolve(CurrentMinecraftDirectory, SelectedVersion);
+            CurrentMinecraftRuntime = _nativeLibraryExtractorService.PrepareNatives(runtimeInfo);
         }
 
         private void OpenStorageFolder()

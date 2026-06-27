@@ -191,6 +191,7 @@ namespace CarbonLauncher.Services
                     $"Java path: {command.JavaExecutablePath}{Environment.NewLine}" +
                     $"Working directory: {command.WorkingDirectory}{Environment.NewLine}" +
                     $"MainClass: {command.MainClass}{Environment.NewLine}" +
+                    $"NativesDirectory: {GetNativeDirectory(command)}{Environment.NewLine}" +
                     $"Username: {profile.Username}{Environment.NewLine}" +
                     $"Version: {profile.MinecraftVersion}{Environment.NewLine}" +
                     $"Full command preview: {command.FullCommandPreview}{Environment.NewLine}" +
@@ -199,6 +200,20 @@ namespace CarbonLauncher.Services
             catch
             {
             }
+        }
+
+        private static string GetNativeDirectory(LaunchCommand command)
+        {
+            foreach (string argument in command.JvmArguments)
+            {
+                const string javaLibraryPathPrefix = "-Djava.library.path=";
+                if (argument.StartsWith(javaLibraryPathPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    return argument.Substring(javaLibraryPathPrefix.Length);
+                }
+            }
+
+            return string.Empty;
         }
 
         private static void AppendLogLine(string logFilePath, string? line)

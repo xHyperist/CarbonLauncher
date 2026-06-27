@@ -30,6 +30,14 @@ namespace CarbonLauncher.Models
 
         public List<string> MissingLibraries { get; set; } = new List<string>();
 
+        public List<string> NativeLibraryJarPaths { get; set; } = new List<string>();
+
+        public List<string> MissingNativeLibraryJarPaths { get; set; } = new List<string>();
+
+        public List<string> ExtractedNativeFiles { get; set; } = new List<string>();
+
+        public bool AreNativesPrepared { get; set; }
+
         public List<string> Errors { get; set; } = new List<string>();
 
         public List<string> Warnings { get; set; } = new List<string>();
