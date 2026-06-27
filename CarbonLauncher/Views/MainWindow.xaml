@@ -193,7 +193,7 @@
                                            Foreground="{StaticResource CarbonTextBrush}"
                                            FontSize="42"
                                            FontWeight="Bold" />
-                                <TextBlock Text="{Binding SelectedVersionText, StringFormat=Selected Version: {0}}"
+                                <TextBlock Text="{Binding SelectedVersionDisplayText, StringFormat=Selected Version: {0}}"
                                            Foreground="{StaticResource CarbonCyanBrush}"
                                            FontSize="16"
                                            FontWeight="SemiBold"
@@ -236,7 +236,7 @@
                                                        Text="Version"
                                                        Foreground="{StaticResource CarbonMutedTextBrush}" />
                                             <TextBlock Grid.Column="3"
-                                                       Text="{Binding SelectedVersionText}"
+                                                       Text="{Binding SelectedVersionDisplayText}"
                                                        Foreground="{StaticResource CarbonTextBrush}"
                                                        FontWeight="SemiBold" />
 
@@ -330,6 +330,10 @@
                                                                Foreground="{StaticResource CarbonTextBrush}"
                                                                FontSize="22"
                                                                FontWeight="SemiBold" />
+                                                    <TextBlock Text="{Binding DisplayName}"
+                                                               Foreground="{StaticResource CarbonMutedTextBrush}"
+                                                               FontSize="13"
+                                                               Margin="0,4,0,0" />
                                                     <TextBlock Text="{Binding Status}"
                                                                Foreground="{StaticResource CarbonMutedTextBrush}"
                                                                FontSize="13"

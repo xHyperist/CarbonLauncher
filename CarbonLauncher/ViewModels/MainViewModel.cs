@@ -12,7 +12,9 @@ namespace CarbonLauncher.ViewModels
         private readonly JavaDetectionService _javaDetectionService;
         private readonly MinecraftDirectoryService _minecraftDirectoryService;
         private readonly LaunchProfileService _launchProfileService;
+        private readonly VersionManifestService _versionManifestService;
         private readonly LauncherConfig _config;
+        private readonly VersionManifest _versionManifest;
         private LauncherVersion _selectedVersion;
         private JavaInfo _currentJava;
         private MinecraftDirectoryInfo _currentMinecraftDirectory;
@@ -35,13 +37,11 @@ namespace CarbonLauncher.ViewModels
             _javaDetectionService = new JavaDetectionService();
             _minecraftDirectoryService = new MinecraftDirectoryService();
             _launchProfileService = new LaunchProfileService();
+            _versionManifestService = new VersionManifestService();
             _config = _configService.Load();
+            _versionManifest = _versionManifestService.Load();
 
-            Versions = new ObservableCollection<LauncherVersion>
-            {
-                new LauncherVersion("1.8.9", "Ready"),
-                new LauncherVersion("1.7.10", "Coming Soon")
-            };
+            Versions = new ObservableCollection<LauncherVersion>(_versionManifest.Versions);
 
             NavigationItems = new ObservableCollection<NavigationItemViewModel>
             {
@@ -52,6 +52,8 @@ namespace CarbonLauncher.ViewModels
             };
 
             _selectedVersion = FindVersion(_config.SelectedVersion);
+            _config.SelectedVersion = _selectedVersion.MinecraftVersion;
+            SaveConfig();
             _currentPage = IsKnownPage(_config.LastSelectedPage) ? _config.LastSelectedPage : "Home";
             _guestUsername = _config.GuestUsername;
             _playerIgnInput = _guestUsername;
@@ -190,11 +192,16 @@ namespace CarbonLauncher.ViewModels
                     RefreshLaunchProfile();
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(SelectedVersionText));
+                    OnPropertyChanged(nameof(SelectedVersionDisplayText));
                 }
             }
         }
 
         public string SelectedVersionText => SelectedVersion.MinecraftVersion;
+
+        public string SelectedVersionDisplayText => string.IsNullOrWhiteSpace(SelectedVersion.DisplayName)
+            ? SelectedVersion.MinecraftVersion
+            : SelectedVersion.DisplayName;
 
         public JavaInfo CurrentJava
         {
@@ -495,14 +502,14 @@ namespace CarbonLauncher.ViewModels
                 return;
             }
 
-            if (version.MinecraftVersion != "1.8.9")
+            if (!version.IsAvailable || version.IsComingSoon)
             {
-                ShowModal("Coming Soon", $"{version.MinecraftVersion} is coming soon.");
+                ShowModal("Coming Soon", $"{version.DisplayName} is coming soon.");
                 return;
             }
 
             SelectedVersion = version;
-            ShowModal("Version Selected", $"{version.MinecraftVersion} is selected.");
+            ShowModal("Version Selected", $"{version.DisplayName} is selected.");
         }
 
         private void SaveAccount()
@@ -619,7 +626,8 @@ namespace CarbonLauncher.ViewModels
             LaunchProfile profile = _launchProfileService.CreateDefaultProfile(
                 profileConfig,
                 CurrentJava,
-                CurrentMinecraftDirectory);
+                CurrentMinecraftDirectory,
+                SelectedVersion);
             CurrentLaunchProfile = profile;
             LaunchValidationResult validation = _launchProfileService.Validate(
                 profile,
@@ -692,7 +700,7 @@ namespace CarbonLauncher.ViewModels
         {
             foreach (LauncherVersion version in Versions)
             {
-                version.IsSelected = version.MinecraftVersion == SelectedVersion.MinecraftVersion;
+                version.IsSelected = version.Id == SelectedVersion.Id;
             }
         }
 
@@ -700,7 +708,15 @@ namespace CarbonLauncher.ViewModels
         {
             foreach (LauncherVersion version in Versions)
             {
-                if (version.MinecraftVersion == minecraftVersion && version.MinecraftVersion == "1.8.9")
+                if (version.MinecraftVersion == minecraftVersion && version.IsAvailable)
+                {
+                    return version;
+                }
+            }
+
+            foreach (LauncherVersion version in Versions)
+            {
+                if (version.IsAvailable)
                 {
                     return version;
                 }

@@ -11,19 +11,24 @@ namespace CarbonLauncher.Services
         public LaunchProfile CreateDefaultProfile(
             LauncherConfig config,
             JavaInfo javaInfo,
-            MinecraftDirectoryInfo minecraftDirectoryInfo)
+            MinecraftDirectoryInfo minecraftDirectoryInfo,
+            LauncherVersion selectedVersion)
         {
-            string minecraftVersion = string.IsNullOrWhiteSpace(config.SelectedVersion)
+            string minecraftVersion = string.IsNullOrWhiteSpace(selectedVersion.MinecraftVersion)
                 ? "1.8.9"
-                : config.SelectedVersion;
+                : selectedVersion.MinecraftVersion;
             string username = NormalizeOfflineIgn(config.GuestUsername);
             int allocatedMemoryMb = config.AllocatedMemoryMb;
 
             return new LaunchProfile
             {
-                ProfileName = $"Carbon {minecraftVersion}",
+                ProfileName = string.IsNullOrWhiteSpace(selectedVersion.DisplayName)
+                    ? $"Carbon {minecraftVersion}"
+                    : selectedVersion.DisplayName,
                 MinecraftVersion = minecraftVersion,
-                LoaderType = "Forge",
+                LoaderType = string.IsNullOrWhiteSpace(selectedVersion.LoaderType)
+                    ? "Forge"
+                    : selectedVersion.LoaderType,
                 JavaPath = javaInfo.IsDetected ? javaInfo.JavaPath : config.JavaPath,
                 MinecraftDirectory = minecraftDirectoryInfo.IsValid
                     ? minecraftDirectoryInfo.DirectoryPath
