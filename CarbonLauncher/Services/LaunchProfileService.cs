@@ -12,7 +12,8 @@ namespace CarbonLauncher.Services
             LauncherConfig config,
             JavaInfo javaInfo,
             MinecraftDirectoryInfo minecraftDirectoryInfo,
-            LauncherVersion selectedVersion)
+            LauncherVersion selectedVersion,
+            ClientJarInfo clientJarInfo)
         {
             string minecraftVersion = string.IsNullOrWhiteSpace(selectedVersion.MinecraftVersion)
                 ? "1.8.9"
@@ -34,6 +35,7 @@ namespace CarbonLauncher.Services
                     ? minecraftDirectoryInfo.DirectoryPath
                     : config.MinecraftDirectory,
                 GameDirectory = string.Empty,
+                ClientJarPath = clientJarInfo.JarPath,
                 Username = username,
                 AllocatedMemoryMb = allocatedMemoryMb,
                 JvmArguments = CreateDefaultJvmArguments(allocatedMemoryMb),
@@ -47,7 +49,9 @@ namespace CarbonLauncher.Services
         public LaunchValidationResult Validate(
             LaunchProfile profile,
             JavaInfo javaInfo,
-            MinecraftDirectoryInfo minecraftDirectoryInfo)
+            MinecraftDirectoryInfo minecraftDirectoryInfo,
+            LauncherVersion selectedVersion,
+            ClientJarInfo clientJarInfo)
         {
             LaunchValidationResult result = new LaunchValidationResult();
 
@@ -83,6 +87,25 @@ namespace CarbonLauncher.Services
                 result.Errors.Add("Selected version is required.");
             }
 
+            if (!selectedVersion.IsAvailable || selectedVersion.IsComingSoon)
+            {
+                result.Errors.Add("Selected version is not available.");
+            }
+            else if (clientJarInfo.Status == "Missing" || !clientJarInfo.Exists)
+            {
+                result.Errors.Add("Client jar is missing.");
+            }
+            else if (clientJarInfo.Status == "Error")
+            {
+                result.Errors.Add(string.IsNullOrWhiteSpace(clientJarInfo.ErrorMessage)
+                    ? "Client jar check failed."
+                    : clientJarInfo.ErrorMessage);
+            }
+            else if (clientJarInfo.Exists && clientJarInfo.FileSizeBytes == 0)
+            {
+                result.Errors.Add("Client jar file is empty.");
+            }
+
             if (profile.AllocatedMemoryMb < 2048)
             {
                 result.Warnings.Add("Allocated memory is below 2048 MB.");
@@ -91,12 +114,6 @@ namespace CarbonLauncher.Services
             if (javaInfo.IsDetected && javaInfo.MajorVersion == 0)
             {
                 result.Warnings.Add("Java major version could not be parsed.");
-            }
-
-            if (!string.IsNullOrWhiteSpace(profile.MinecraftVersion) &&
-                profile.MinecraftVersion != "1.8.9")
-            {
-                result.Warnings.Add("Selected version is not available yet.");
             }
 
             if (string.IsNullOrWhiteSpace(profile.GameDirectory))

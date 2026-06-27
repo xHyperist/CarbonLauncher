@@ -224,6 +224,8 @@
                                                 <RowDefinition Height="Auto" />
                                                 <RowDefinition Height="8" />
                                                 <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="8" />
+                                                <RowDefinition Height="Auto" />
                                             </Grid.RowDefinitions>
 
                                             <TextBlock Text="Profile"
@@ -273,6 +275,14 @@
                                             <TextBlock Grid.Row="4"
                                                        Grid.Column="3"
                                                        Text="{Binding LaunchStatusText}"
+                                                       Foreground="{StaticResource CarbonTextBrush}"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Grid.Row="6"
+                                                       Text="Client Jar"
+                                                       Foreground="{StaticResource CarbonMutedTextBrush}" />
+                                            <TextBlock Grid.Row="6"
+                                                       Grid.Column="1"
+                                                       Text="{Binding LaunchClientJarReadinessText}"
                                                        Foreground="{StaticResource CarbonTextBrush}"
                                                        FontWeight="SemiBold" />
                                         </Grid>

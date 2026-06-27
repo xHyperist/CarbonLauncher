@@ -17,6 +17,8 @@ namespace CarbonLauncher.Models
 
         public string GameDirectory { get; set; } = string.Empty;
 
+        public string ClientJarPath { get; set; } = string.Empty;
+
         public string Username { get; set; } = "CarbonPlayer";
 
         public int AllocatedMemoryMb { get; set; } = 2048;

@@ -13,11 +13,13 @@ namespace CarbonLauncher.ViewModels
         private readonly MinecraftDirectoryService _minecraftDirectoryService;
         private readonly LaunchProfileService _launchProfileService;
         private readonly VersionManifestService _versionManifestService;
+        private readonly ClientJarResolverService _clientJarResolverService;
         private readonly LauncherConfig _config;
         private readonly VersionManifest _versionManifest;
         private LauncherVersion _selectedVersion;
         private JavaInfo _currentJava;
         private MinecraftDirectoryInfo _currentMinecraftDirectory;
+        private ClientJarInfo _currentClientJar;
         private LaunchProfile _currentLaunchProfile;
         private LaunchValidationResult _currentLaunchValidation;
         private string _currentPage;
@@ -38,6 +40,7 @@ namespace CarbonLauncher.ViewModels
             _minecraftDirectoryService = new MinecraftDirectoryService();
             _launchProfileService = new LaunchProfileService();
             _versionManifestService = new VersionManifestService();
+            _clientJarResolverService = new ClientJarResolverService();
             _config = _configService.Load();
             _versionManifest = _versionManifestService.Load();
 
@@ -74,6 +77,11 @@ namespace CarbonLauncher.ViewModels
                 Source = "Not Found",
                 ErrorMessage = "Minecraft directory has not been checked yet."
             };
+            _currentClientJar = new ClientJarInfo
+            {
+                Status = "Missing",
+                ErrorMessage = "Client jar has not been checked yet."
+            };
             _currentLaunchProfile = new LaunchProfile();
             _currentLaunchValidation = new LaunchValidationResult
             {
@@ -89,12 +97,18 @@ namespace CarbonLauncher.ViewModels
             SaveAccountCommand = new RelayCommand(_ => SaveAccount());
             DetectJavaCommand = new RelayCommand(_ => DetectJava());
             DetectMinecraftDirectoryCommand = new RelayCommand(_ => DetectMinecraftDirectory());
+            CheckClientJarCommand = new RelayCommand(_ =>
+            {
+                RefreshClientJar();
+                RefreshLaunchProfile();
+            });
             RefreshLaunchProfileCommand = new RelayCommand(_ => RefreshLaunchProfile());
             ShowComingSoonCommand = new RelayCommand(message => ShowModal("Coming Soon", message as string ?? "This feature is coming soon."));
             CloseModalCommand = new RelayCommand(_ => IsModalVisible = false);
 
             DetectJava();
             DetectMinecraftDirectory();
+            RefreshClientJar();
             RefreshLaunchProfile();
             UpdateActiveNavigation();
             UpdateSelectedVersionState();
@@ -115,6 +129,8 @@ namespace CarbonLauncher.ViewModels
         public ICommand DetectJavaCommand { get; }
 
         public ICommand DetectMinecraftDirectoryCommand { get; }
+
+        public ICommand CheckClientJarCommand { get; }
 
         public ICommand RefreshLaunchProfileCommand { get; }
 
@@ -189,6 +205,7 @@ namespace CarbonLauncher.ViewModels
                     _config.SelectedVersion = value.MinecraftVersion;
                     SaveConfig();
                     UpdateSelectedVersionState();
+                    RefreshClientJar();
                     RefreshLaunchProfile();
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(SelectedVersionText));
@@ -289,6 +306,33 @@ namespace CarbonLauncher.ViewModels
             }
         }
 
+        public ClientJarInfo CurrentClientJar
+        {
+            get => _currentClientJar;
+            private set
+            {
+                _currentClientJar = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(ClientJarStatusText));
+                OnPropertyChanged(nameof(ClientJarPathText));
+                OnPropertyChanged(nameof(LaunchClientJarReadinessText));
+            }
+        }
+
+        public string ClientJarStatusText
+        {
+            get
+            {
+                return CurrentClientJar.Status == "NotAvailable"
+                    ? "Not Available"
+                    : CurrentClientJar.Status;
+            }
+        }
+
+        public string ClientJarPathText => string.IsNullOrWhiteSpace(CurrentClientJar.JarPath)
+            ? "-"
+            : CurrentClientJar.JarPath;
+
         public LaunchProfile CurrentLaunchProfile
         {
             get => _currentLaunchProfile;
@@ -318,6 +362,8 @@ namespace CarbonLauncher.ViewModels
         public string LaunchJavaReadinessText => CurrentJava.IsDetected ? "Ready" : "Missing";
 
         public string LaunchMinecraftDirectoryReadinessText => CurrentMinecraftDirectory.IsValid ? "Ready" : "Missing";
+
+        public string LaunchClientJarReadinessText => ClientJarStatusText;
 
         public string LaunchStatusText => CurrentLaunchValidation.IsValid ? "Ready" : "Not Ready";
 
@@ -610,6 +656,11 @@ namespace CarbonLauncher.ViewModels
             RefreshLaunchProfile();
         }
 
+        private void RefreshClientJar()
+        {
+            CurrentClientJar = _clientJarResolverService.Resolve(SelectedVersion);
+        }
+
         private void RefreshLaunchProfile()
         {
             LauncherConfig profileConfig = new LauncherConfig
@@ -627,12 +678,15 @@ namespace CarbonLauncher.ViewModels
                 profileConfig,
                 CurrentJava,
                 CurrentMinecraftDirectory,
-                SelectedVersion);
+                SelectedVersion,
+                CurrentClientJar);
             CurrentLaunchProfile = profile;
             LaunchValidationResult validation = _launchProfileService.Validate(
                 profile,
                 CurrentJava,
-                CurrentMinecraftDirectory);
+                CurrentMinecraftDirectory,
+                SelectedVersion,
+                CurrentClientJar);
 
             if (HasPlayerIgnError)
             {
