@@ -38,7 +38,9 @@ namespace CarbonLauncher.Services
             return command;
         }
 
-        private static List<string> BuildJvmArguments(LaunchProfile profile, MinecraftRuntimeInfo minecraftRuntimeInfo)
+        private static List<string> BuildJvmArguments(
+            LaunchProfile profile,
+            MinecraftRuntimeInfo minecraftRuntimeInfo)
         {
             List<string> jvmArguments = new List<string>(profile.JvmArguments);
 
@@ -116,7 +118,7 @@ namespace CarbonLauncher.Services
                 ? "1.8"
                 : minecraftRuntimeInfo.AssetIndex;
 
-            return new List<string>
+            List<string> gameArguments = new List<string>
             {
                 "--username",
                 launchSession.Username,
@@ -135,6 +137,8 @@ namespace CarbonLauncher.Services
                 "--userType",
                 launchSession.UserType
             };
+
+            return gameArguments;
         }
 
         private static void Validate(

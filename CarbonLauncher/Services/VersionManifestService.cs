@@ -89,6 +89,7 @@ namespace CarbonLauncher.Services
                         LocalJarPath = string.Empty,
                         RemoteManifestUrl = string.Empty,
                         ReleaseChannel = "Stable",
+                        LaunchMode = "CustomClient",
                         ReleaseDate = null
                     },
                     new LauncherVersion
@@ -156,6 +157,14 @@ namespace CarbonLauncher.Services
             {
                 version.LoaderType = "Forge";
             }
+
+            if (version.IsAvailable && string.IsNullOrWhiteSpace(version.LaunchMode))
+            {
+                version.LaunchMode = "CustomClient";
+            }
+
+            version.TweakClass = version.TweakClass ?? string.Empty;
+            version.MainClassOverride = version.MainClassOverride ?? string.Empty;
 
             if (string.IsNullOrWhiteSpace(version.Status))
             {

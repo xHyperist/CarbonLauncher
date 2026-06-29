@@ -15,6 +15,7 @@ namespace CarbonLauncher.ViewModels
     {
         private readonly LauncherConfigService _configService;
         private readonly LauncherStorageService _storageService;
+        private readonly StartupLogService _startupLogService;
         private readonly JavaDetectionService _javaDetectionService;
         private readonly MinecraftDirectoryService _minecraftDirectoryService;
         private readonly MinecraftRuntimeResolverService _minecraftRuntimeResolverService;
@@ -46,6 +47,7 @@ namespace CarbonLauncher.ViewModels
         private string _minecraftDirectory;
         private int _allocatedMemoryMb;
         private bool _isModalVisible;
+        private bool _startupDiagnosticsScheduled;
         private string _modalTitle;
         private string _modalMessage;
 
@@ -53,7 +55,9 @@ namespace CarbonLauncher.ViewModels
         {
             _storageService = new LauncherStorageService();
             _currentStorage = _storageService.EnsureStorage();
-            _storageService.CleanTempDirectory();
+            _startupLogService = new StartupLogService(_storageService);
+            _startupLogService.Write("app started");
+            _startupLogService.Write("storage ensured");
             _configService = new LauncherConfigService(_storageService);
             _javaDetectionService = new JavaDetectionService();
             _minecraftDirectoryService = new MinecraftDirectoryService();
@@ -67,7 +71,9 @@ namespace CarbonLauncher.ViewModels
             _versionManifestService = new VersionManifestService(_storageService);
             _clientJarResolverService = new ClientJarResolverService(_storageService);
             _config = _configService.Load();
+            _startupLogService.Write("config loaded");
             _versionManifest = _versionManifestService.Load();
+            _startupLogService.Write("manifest loaded");
 
             Versions = new ObservableCollection<LauncherVersion>(_versionManifest.Versions);
 
@@ -166,10 +172,6 @@ namespace CarbonLauncher.ViewModels
             ShowComingSoonCommand = new RelayCommand(message => ShowModal("Coming Soon", message as string ?? "This feature is coming soon."));
             CloseModalCommand = new RelayCommand(_ => IsModalVisible = false);
 
-            DetectJava();
-            DetectMinecraftDirectory();
-            RefreshClientJar();
-            RefreshLaunchProfile();
             UpdateActiveNavigation();
             UpdateSelectedVersionState();
         }
@@ -754,6 +756,151 @@ namespace CarbonLauncher.ViewModels
             SaveConfig();
         }
 
+        public void StartStartupDiagnostics()
+        {
+            if (_startupDiagnosticsScheduled)
+            {
+                return;
+            }
+
+            _startupDiagnosticsScheduled = true;
+
+            if (Application.Current?.Dispatcher != null)
+            {
+                Application.Current.Dispatcher.BeginInvoke(
+                    new Action(() => _ = RunStartupDiagnosticsAsync()),
+                    System.Windows.Threading.DispatcherPriority.Background);
+                return;
+            }
+
+            _ = RunStartupDiagnosticsAsync();
+        }
+
+        private async Task RunStartupDiagnosticsAsync()
+        {
+            StartupDiagnosticsResult result = await Task.Run(() => BuildStartupDiagnostics());
+
+            if (Application.Current?.Dispatcher != null &&
+                !Application.Current.Dispatcher.CheckAccess())
+            {
+                Application.Current.Dispatcher.Invoke(() => ApplyStartupDiagnostics(result));
+                return;
+            }
+
+            ApplyStartupDiagnostics(result);
+        }
+
+        private StartupDiagnosticsResult BuildStartupDiagnostics()
+        {
+            StartupDiagnosticsResult result = new StartupDiagnosticsResult();
+
+            try
+            {
+                _startupLogService.Write("startup diagnostics started");
+                _storageService.CleanTempDirectory();
+
+                result.JavaInfo = _javaDetectionService.Detect(JavaPath);
+                _startupLogService.Write("java detection completed");
+
+                result.MinecraftDirectoryInfo = _minecraftDirectoryService.Detect(MinecraftDirectory);
+                _startupLogService.Write("minecraft directory detection completed");
+
+                result.ClientJarInfo = _clientJarResolverService.Resolve(SelectedVersion);
+                _startupLogService.Write("client jar resolved");
+
+                MinecraftRuntimeInfo runtimeInfo = _minecraftRuntimeResolverService.Resolve(
+                    result.MinecraftDirectoryInfo,
+                    SelectedVersion);
+                result.MinecraftRuntimeInfo = _nativeLibraryExtractorService.PrepareNatives(runtimeInfo);
+                _startupLogService.Write("minecraft runtime resolved");
+
+                LauncherConfig profileConfig = new LauncherConfig
+                {
+                    SelectedVersion = SelectedVersion.MinecraftVersion,
+                    GuestUsername = _config.GuestUsername,
+                    JavaPath = result.JavaInfo.IsDetected ? result.JavaInfo.JavaPath : JavaPath,
+                    MinecraftDirectory = result.MinecraftDirectoryInfo.IsValid
+                        ? result.MinecraftDirectoryInfo.DirectoryPath
+                        : MinecraftDirectory,
+                    AllocatedMemoryMb = AllocatedMemoryMb,
+                    LastSelectedPage = CurrentPage,
+                    WindowWidth = _config.WindowWidth,
+                    WindowHeight = _config.WindowHeight
+                };
+
+                result.LaunchProfile = _launchProfileService.CreateDefaultProfile(
+                    profileConfig,
+                    result.JavaInfo,
+                    result.MinecraftDirectoryInfo,
+                    SelectedVersion,
+                    result.ClientJarInfo);
+
+                result.LaunchValidation = _launchProfileService.Validate(
+                    result.LaunchProfile,
+                    result.JavaInfo,
+                    result.MinecraftDirectoryInfo,
+                    SelectedVersion,
+                    result.ClientJarInfo);
+
+                if (HasPlayerIgnError)
+                {
+                    result.LaunchValidation.Errors.Add(PlayerIgnErrorText);
+                    result.LaunchValidation.IsValid = false;
+                    result.LaunchValidation.Summary = $"{result.LaunchValidation.Errors.Count} issue(s) need attention.";
+                }
+
+                result.LaunchSession = HasPlayerIgnError
+                    ? _launchSessionService.CreateInvalidGuestSession(PlayerIgnInput, PlayerIgnErrorText)
+                    : _launchSessionService.CreateGuestSession(result.LaunchProfile.Username);
+
+                result.LaunchCommand = _launchCommandBuilderService.Build(
+                    result.LaunchProfile,
+                    result.JavaInfo,
+                    result.MinecraftDirectoryInfo,
+                    result.ClientJarInfo,
+                    SelectedVersion,
+                    result.LaunchSession,
+                    result.MinecraftRuntimeInfo);
+
+                _startupLogService.Write("startup diagnostics completed");
+            }
+            catch (Exception ex)
+            {
+                _startupLogService.Write($"startup diagnostics error: {ex}");
+            }
+
+            return result;
+        }
+
+        private void ApplyStartupDiagnostics(StartupDiagnosticsResult result)
+        {
+            CurrentJava = result.JavaInfo;
+            CurrentMinecraftDirectory = result.MinecraftDirectoryInfo;
+            CurrentClientJar = result.ClientJarInfo;
+            CurrentMinecraftRuntime = result.MinecraftRuntimeInfo;
+            CurrentLaunchProfile = result.LaunchProfile;
+            CurrentLaunchValidation = result.LaunchValidation;
+            CurrentLaunchSession = result.LaunchSession;
+            CurrentLaunchCommand = result.LaunchCommand;
+
+            if (result.JavaInfo.IsDetected)
+            {
+                _javaPath = result.JavaInfo.JavaPath;
+                _config.JavaPath = result.JavaInfo.JavaPath;
+                OnPropertyChanged(nameof(JavaPath));
+            }
+
+            if (result.MinecraftDirectoryInfo.IsValid)
+            {
+                _minecraftDirectory = result.MinecraftDirectoryInfo.DirectoryPath;
+                _config.MinecraftDirectory = result.MinecraftDirectoryInfo.DirectoryPath;
+                OnPropertyChanged(nameof(MinecraftDirectory));
+            }
+
+            SaveConfig();
+            OnPropertyChanged(nameof(PlayerIgnReadinessText));
+        }
+
         private void Navigate(string? page)
         {
             if (string.IsNullOrWhiteSpace(page) || !IsKnownPage(page))
@@ -1123,6 +1270,54 @@ namespace CarbonLauncher.ViewModels
         {
             _config.LastSelectedPage = CurrentPage;
             _configService.Save(_config);
+        }
+
+        private sealed class StartupDiagnosticsResult
+        {
+            public JavaInfo JavaInfo { get; set; } = new JavaInfo
+            {
+                IsDetected = false,
+                Source = "Not Found",
+                ErrorMessage = "Java has not been checked yet."
+            };
+
+            public MinecraftDirectoryInfo MinecraftDirectoryInfo { get; set; } = new MinecraftDirectoryInfo
+            {
+                IsDetected = false,
+                IsValid = false,
+                Source = "Not Found",
+                ErrorMessage = "Minecraft directory has not been checked yet."
+            };
+
+            public ClientJarInfo ClientJarInfo { get; set; } = new ClientJarInfo
+            {
+                Status = "Missing",
+                ErrorMessage = "Client jar has not been checked yet."
+            };
+
+            public MinecraftRuntimeInfo MinecraftRuntimeInfo { get; set; } = new MinecraftRuntimeInfo();
+
+            public LaunchProfile LaunchProfile { get; set; } = new LaunchProfile();
+
+            public LaunchValidationResult LaunchValidation { get; set; } = new LaunchValidationResult
+            {
+                IsValid = false,
+                Summary = "Launch profile has not been checked yet."
+            };
+
+            public LaunchSession LaunchSession { get; set; } = new LaunchSession
+            {
+                IsGuestMode = true,
+                SessionType = "offline",
+                AccessToken = "0",
+                UserType = "legacy",
+                ErrorMessage = "Launch session has not been created yet."
+            };
+
+            public CarbonLauncher.Models.LaunchCommand LaunchCommand { get; set; } = new CarbonLauncher.Models.LaunchCommand
+            {
+                IsBuildable = false
+            };
         }
     }
 }

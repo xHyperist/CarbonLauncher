@@ -52,6 +52,16 @@ namespace CarbonLauncher.Views
                 : WindowState.Maximized;
         }
 
+        protected override void OnContentRendered(System.EventArgs e)
+        {
+            base.OnContentRendered(e);
+
+            if (DataContext is MainViewModel viewModel)
+            {
+                viewModel.StartStartupDiagnostics();
+            }
+        }
+
         protected override void OnClosing(CancelEventArgs e)
         {
             if (DataContext is MainViewModel viewModel && WindowState == WindowState.Normal)

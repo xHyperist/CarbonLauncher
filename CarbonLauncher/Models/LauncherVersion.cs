@@ -47,6 +47,12 @@ namespace CarbonLauncher.Models
 
         public string ReleaseChannel { get; set; } = string.Empty;
 
+        public string LaunchMode { get; set; } = string.Empty;
+
+        public string TweakClass { get; set; } = string.Empty;
+
+        public string MainClassOverride { get; set; } = string.Empty;
+
         public DateTime? ReleaseDate { get; set; }
 
         public bool IsSelected

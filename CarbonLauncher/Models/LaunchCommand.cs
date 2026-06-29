@@ -20,6 +20,18 @@ namespace CarbonLauncher.Models
 
         public string FullCommandPreview { get; set; } = string.Empty;
 
+        public string CarbonJarPath { get; set; } = string.Empty;
+
+        public string CarbonLaunchMode { get; set; } = string.Empty;
+
+        public string CarbonManifestTweakClass { get; set; } = string.Empty;
+
+        public string CarbonManifestMainClass { get; set; } = string.Empty;
+
+        public string CarbonFmlCorePlugin { get; set; } = string.Empty;
+
+        public bool IsCarbonCustomLaunchSupported { get; set; }
+
         public List<string> Errors { get; set; } = new List<string>();
 
         public List<string> Warnings { get; set; } = new List<string>();
