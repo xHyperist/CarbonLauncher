@@ -32,6 +32,10 @@ namespace CarbonLauncher.Models
 
         public bool IsCarbonCustomLaunchSupported { get; set; }
 
+        public string LaunchWrapperPath { get; set; } = string.Empty;
+
+        public string LaunchWrapperStatus { get; set; } = string.Empty;
+
         public List<string> Errors { get; set; } = new List<string>();
 
         public List<string> Warnings { get; set; } = new List<string>();

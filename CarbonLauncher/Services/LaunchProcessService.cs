@@ -192,6 +192,11 @@ namespace CarbonLauncher.Services
                     $"Working directory: {command.WorkingDirectory}{Environment.NewLine}" +
                     $"MainClass: {command.MainClass}{Environment.NewLine}" +
                     $"NativesDirectory: {GetNativeDirectory(command)}{Environment.NewLine}" +
+                    $"Carbon Tweaker Status: {GetCarbonTweakerStatus(command)}{Environment.NewLine}" +
+                    $"Carbon TweakClass: {command.CarbonManifestTweakClass}{Environment.NewLine}" +
+                    $"Carbon Jar Path: {command.CarbonJarPath}{Environment.NewLine}" +
+                    $"LaunchWrapper Status: {command.LaunchWrapperStatus}{Environment.NewLine}" +
+                    $"LaunchWrapper Path: {command.LaunchWrapperPath}{Environment.NewLine}" +
                     $"Username: {profile.Username}{Environment.NewLine}" +
                     $"Version: {profile.MinecraftVersion}{Environment.NewLine}" +
                     $"Full command preview: {command.FullCommandPreview}{Environment.NewLine}" +
@@ -214,6 +219,13 @@ namespace CarbonLauncher.Services
             }
 
             return string.Empty;
+        }
+
+        private static string GetCarbonTweakerStatus(LaunchCommand command)
+        {
+            return string.IsNullOrWhiteSpace(command.CarbonManifestTweakClass)
+                ? "Missing"
+                : "Ready";
         }
 
         private static void AppendLogLine(string logFilePath, string? line)

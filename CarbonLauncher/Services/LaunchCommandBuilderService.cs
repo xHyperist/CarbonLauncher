@@ -16,7 +16,9 @@ namespace CarbonLauncher.Services
             ClientJarInfo clientJarInfo,
             LauncherVersion selectedVersion,
             LaunchSession launchSession,
-            MinecraftRuntimeInfo minecraftRuntimeInfo)
+            MinecraftRuntimeInfo minecraftRuntimeInfo,
+            CarbonTweakerInfo carbonTweakerInfo,
+            LaunchWrapperInfo launchWrapperInfo)
         {
             LaunchCommand command = new LaunchCommand
             {
@@ -24,15 +26,22 @@ namespace CarbonLauncher.Services
                 WorkingDirectory = string.IsNullOrWhiteSpace(profile.GameDirectory)
                     ? profile.MinecraftDirectory
                     : profile.GameDirectory,
-                MainClass = string.IsNullOrWhiteSpace(minecraftRuntimeInfo.MainClass)
+                MainClass = carbonTweakerInfo.HasTweakClass
+                    ? DefaultMainClass
+                    : string.IsNullOrWhiteSpace(minecraftRuntimeInfo.MainClass)
                     ? DefaultMainClass
                     : minecraftRuntimeInfo.MainClass,
                 JvmArguments = BuildJvmArguments(profile, minecraftRuntimeInfo),
-                ClasspathEntries = BuildClasspath(clientJarInfo, minecraftRuntimeInfo),
-                GameArguments = BuildGameArguments(profile, launchSession, minecraftRuntimeInfo)
+                ClasspathEntries = BuildClasspath(clientJarInfo, minecraftRuntimeInfo, launchWrapperInfo),
+                GameArguments = BuildGameArguments(profile, launchSession, minecraftRuntimeInfo, carbonTweakerInfo),
+                CarbonJarPath = carbonTweakerInfo.JarPath,
+                CarbonLaunchMode = carbonTweakerInfo.LaunchMode,
+                CarbonManifestTweakClass = carbonTweakerInfo.TweakClass,
+                LaunchWrapperPath = launchWrapperInfo.ExpectedPath,
+                LaunchWrapperStatus = launchWrapperInfo.Status
             };
 
-            Validate(command, profile, javaInfo, minecraftDirectoryInfo, clientJarInfo, selectedVersion, launchSession, minecraftRuntimeInfo);
+            Validate(command, profile, javaInfo, minecraftDirectoryInfo, clientJarInfo, selectedVersion, launchSession, minecraftRuntimeInfo, carbonTweakerInfo, launchWrapperInfo);
             command.IsBuildable = command.Errors.Count == 0;
             command.FullCommandPreview = BuildPreview(command);
             return command;
@@ -75,13 +84,21 @@ namespace CarbonLauncher.Services
             }
         }
 
-        private static List<string> BuildClasspath(ClientJarInfo clientJarInfo, MinecraftRuntimeInfo minecraftRuntimeInfo)
+        private static List<string> BuildClasspath(
+            ClientJarInfo clientJarInfo,
+            MinecraftRuntimeInfo minecraftRuntimeInfo,
+            LaunchWrapperInfo launchWrapperInfo)
         {
             List<string> classpathEntries = new List<string>();
 
             foreach (string libraryPath in minecraftRuntimeInfo.LibraryPaths)
             {
                 AddClasspathEntry(classpathEntries, libraryPath);
+            }
+
+            if (launchWrapperInfo.IsRequired && launchWrapperInfo.IsFound)
+            {
+                AddClasspathEntry(classpathEntries, launchWrapperInfo.ExpectedPath);
             }
 
             AddClasspathEntry(classpathEntries, minecraftRuntimeInfo.ClientJarPath);
@@ -108,7 +125,8 @@ namespace CarbonLauncher.Services
         private static List<string> BuildGameArguments(
             LaunchProfile profile,
             LaunchSession launchSession,
-            MinecraftRuntimeInfo minecraftRuntimeInfo)
+            MinecraftRuntimeInfo minecraftRuntimeInfo,
+            CarbonTweakerInfo carbonTweakerInfo)
         {
             string assetsDirectory = string.IsNullOrWhiteSpace(minecraftRuntimeInfo.AssetsDirectory)
                 ? Path.Combine(profile.MinecraftDirectory, "assets")
@@ -138,7 +156,27 @@ namespace CarbonLauncher.Services
                 launchSession.UserType
             };
 
+            if (carbonTweakerInfo.HasTweakClass &&
+                !ContainsArgumentPair(gameArguments, "--tweakClass", carbonTweakerInfo.TweakClass))
+            {
+                gameArguments.Add("--tweakClass");
+                gameArguments.Add(carbonTweakerInfo.TweakClass);
+            }
+
             return gameArguments;
+        }
+
+        private static bool ContainsArgumentPair(List<string> arguments, string name, string value)
+        {
+            for (int index = 0; index < arguments.Count - 1; index++)
+            {
+                if (arguments[index] == name && arguments[index + 1] == value)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static void Validate(
@@ -149,7 +187,9 @@ namespace CarbonLauncher.Services
             ClientJarInfo clientJarInfo,
             LauncherVersion selectedVersion,
             LaunchSession launchSession,
-            MinecraftRuntimeInfo minecraftRuntimeInfo)
+            MinecraftRuntimeInfo minecraftRuntimeInfo,
+            CarbonTweakerInfo carbonTweakerInfo,
+            LaunchWrapperInfo launchWrapperInfo)
         {
             if (string.IsNullOrWhiteSpace(command.JavaExecutablePath) ||
                 !File.Exists(command.JavaExecutablePath))
@@ -225,6 +265,34 @@ namespace CarbonLauncher.Services
             foreach (string warning in minecraftRuntimeInfo.Warnings)
             {
                 command.Warnings.Add(warning);
+            }
+
+            if (carbonTweakerInfo.Status == "Error")
+            {
+                command.Warnings.Add(string.IsNullOrWhiteSpace(carbonTweakerInfo.ErrorMessage)
+                    ? "Carbon tweaker manifest could not be read."
+                    : carbonTweakerInfo.ErrorMessage);
+            }
+            else if (!carbonTweakerInfo.HasTweakClass)
+            {
+                command.Warnings.Add("Carbon TweakClass was not found. Minecraft may launch as vanilla.");
+            }
+
+            if (carbonTweakerInfo.HasTweakClass && !launchWrapperInfo.IsFound)
+            {
+                command.Errors.Add("LaunchWrapper is missing. Required for Carbon Tweaker launch.");
+
+                if (!string.IsNullOrWhiteSpace(launchWrapperInfo.ExpectedPath))
+                {
+                    command.Errors.Add($"Expected LaunchWrapper path: {launchWrapperInfo.ExpectedPath}");
+                }
+            }
+
+            if (launchWrapperInfo.Status == "Error")
+            {
+                command.Errors.Add(string.IsNullOrWhiteSpace(launchWrapperInfo.ErrorMessage)
+                    ? "LaunchWrapper check failed."
+                    : launchWrapperInfo.ErrorMessage);
             }
 
             if (minecraftRuntimeInfo.MissingLibraries.Count > 0)

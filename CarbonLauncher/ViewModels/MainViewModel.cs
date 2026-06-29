@@ -26,6 +26,8 @@ namespace CarbonLauncher.ViewModels
         private readonly LaunchProcessService _launchProcessService;
         private readonly VersionManifestService _versionManifestService;
         private readonly ClientJarResolverService _clientJarResolverService;
+        private readonly CarbonTweakerManifestService _carbonTweakerManifestService;
+        private readonly LaunchWrapperResolverService _launchWrapperResolverService;
         private readonly LauncherConfig _config;
         private readonly VersionManifest _versionManifest;
         private LauncherStorageInfo _currentStorage;
@@ -34,6 +36,8 @@ namespace CarbonLauncher.ViewModels
         private MinecraftDirectoryInfo _currentMinecraftDirectory;
         private MinecraftRuntimeInfo _currentMinecraftRuntime;
         private ClientJarInfo _currentClientJar;
+        private CarbonTweakerInfo _currentCarbonTweaker;
+        private LaunchWrapperInfo _currentLaunchWrapper;
         private LaunchProfile _currentLaunchProfile;
         private LaunchValidationResult _currentLaunchValidation;
         private LaunchSession _currentLaunchSession;
@@ -70,6 +74,8 @@ namespace CarbonLauncher.ViewModels
             _launchProcessService.ProcessExited += OnLaunchProcessExited;
             _versionManifestService = new VersionManifestService(_storageService);
             _clientJarResolverService = new ClientJarResolverService(_storageService);
+            _carbonTweakerManifestService = new CarbonTweakerManifestService();
+            _launchWrapperResolverService = new LaunchWrapperResolverService();
             _config = _configService.Load();
             _startupLogService.Write("config loaded");
             _versionManifest = _versionManifestService.Load();
@@ -118,6 +124,12 @@ namespace CarbonLauncher.ViewModels
                 Status = "Missing",
                 ErrorMessage = "Client jar has not been checked yet."
             };
+            _currentCarbonTweaker = new CarbonTweakerInfo
+            {
+                Status = "MissingJar",
+                ErrorMessage = "Carbon tweaker manifest has not been checked yet."
+            };
+            _currentLaunchWrapper = new LaunchWrapperInfo();
             _currentLaunchProfile = new LaunchProfile();
             _currentLaunchValidation = new LaunchValidationResult
             {
@@ -150,6 +162,8 @@ namespace CarbonLauncher.ViewModels
             CheckClientJarCommand = new RelayCommand(_ =>
             {
                 RefreshClientJar();
+                RefreshCarbonTweaker();
+                RefreshLaunchWrapper();
                 RefreshLaunchProfile();
             });
             RefreshLaunchProfileCommand = new RelayCommand(_ => RefreshLaunchProfile());
@@ -166,7 +180,20 @@ namespace CarbonLauncher.ViewModels
             RefreshLaunchCommandCommand = new RelayCommand(_ =>
             {
                 RefreshClientJar();
+                RefreshCarbonTweaker();
+                RefreshLaunchWrapper();
                 RefreshLaunchProfile();
+            });
+            RefreshCarbonTweakerCommand = new RelayCommand(_ =>
+            {
+                RefreshCarbonTweaker();
+                RefreshLaunchWrapper();
+                RefreshLaunchCommand();
+            });
+            RefreshLaunchWrapperCommand = new RelayCommand(_ =>
+            {
+                RefreshLaunchWrapper();
+                RefreshLaunchCommand();
             });
             OpenStorageFolderCommand = new RelayCommand(_ => OpenStorageFolder());
             ShowComingSoonCommand = new RelayCommand(message => ShowModal("Coming Soon", message as string ?? "This feature is coming soon."));
@@ -203,6 +230,10 @@ namespace CarbonLauncher.ViewModels
         public ICommand RefreshLaunchSessionCommand { get; }
 
         public ICommand RefreshLaunchCommandCommand { get; }
+
+        public ICommand RefreshCarbonTweakerCommand { get; }
+
+        public ICommand RefreshLaunchWrapperCommand { get; }
 
         public ICommand OpenStorageFolderCommand { get; }
 
@@ -278,6 +309,8 @@ namespace CarbonLauncher.ViewModels
                     SaveConfig();
                     UpdateSelectedVersionState();
                     RefreshClientJar();
+                    RefreshCarbonTweaker();
+                    RefreshLaunchWrapper();
                     RefreshLaunchProfile();
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(SelectedVersionText));
@@ -450,6 +483,74 @@ namespace CarbonLauncher.ViewModels
             ? "-"
             : CurrentClientJar.JarPath;
 
+        public CarbonTweakerInfo CurrentCarbonTweaker
+        {
+            get => _currentCarbonTweaker;
+            private set
+            {
+                _currentCarbonTweaker = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(CarbonTweakerStatusText));
+                OnPropertyChanged(nameof(CarbonTweakerClassText));
+            }
+        }
+
+        public string CarbonTweakerStatusText
+        {
+            get
+            {
+                switch (CurrentCarbonTweaker.Status)
+                {
+                    case "Ready":
+                        return "Ready";
+                    case "Error":
+                        return "Error";
+                    case "MissingTweakClass":
+                        return "Missing";
+                    default:
+                        return "Missing";
+                }
+            }
+        }
+
+        public string CarbonTweakerClassText => string.IsNullOrWhiteSpace(CurrentCarbonTweaker.TweakClass)
+            ? "-"
+            : CurrentCarbonTweaker.TweakClass;
+
+        public LaunchWrapperInfo CurrentLaunchWrapper
+        {
+            get => _currentLaunchWrapper;
+            private set
+            {
+                _currentLaunchWrapper = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(LaunchWrapperStatusText));
+                OnPropertyChanged(nameof(LaunchWrapperPathText));
+            }
+        }
+
+        public string LaunchWrapperStatusText
+        {
+            get
+            {
+                switch (CurrentLaunchWrapper.Status)
+                {
+                    case "Ready":
+                        return "Ready";
+                    case "Missing":
+                        return "Missing";
+                    case "Error":
+                        return "Error";
+                    default:
+                        return "Not Required";
+                }
+            }
+        }
+
+        public string LaunchWrapperPathText => string.IsNullOrWhiteSpace(CurrentLaunchWrapper.ExpectedPath)
+            ? "-"
+            : CurrentLaunchWrapper.ExpectedPath;
+
         public LaunchProfile CurrentLaunchProfile
         {
             get => _currentLaunchProfile;
@@ -589,9 +690,17 @@ namespace CarbonLauncher.ViewModels
                     return "-";
                 }
 
-                return CurrentLaunchCommand.FullCommandPreview.Length <= 260
+                string preview = CurrentLaunchCommand.FullCommandPreview.Length <= 260
                     ? CurrentLaunchCommand.FullCommandPreview
                     : CurrentLaunchCommand.FullCommandPreview.Substring(0, 260) + "...";
+
+                if (!string.IsNullOrWhiteSpace(CurrentLaunchCommand.LaunchWrapperPath) &&
+                    preview.IndexOf("launchwrapper-1.12.jar", StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    preview += $" LaunchWrapper: {CurrentLaunchCommand.LaunchWrapperPath}";
+                }
+
+                return preview;
             }
         }
 
@@ -808,6 +917,14 @@ namespace CarbonLauncher.ViewModels
                 result.ClientJarInfo = _clientJarResolverService.Resolve(SelectedVersion);
                 _startupLogService.Write("client jar resolved");
 
+                result.CarbonTweakerInfo = _carbonTweakerManifestService.Read(result.ClientJarInfo);
+                _startupLogService.Write("carbon tweaker manifest checked");
+
+                result.LaunchWrapperInfo = _launchWrapperResolverService.Resolve(
+                    result.CarbonTweakerInfo,
+                    result.MinecraftDirectoryInfo);
+                _startupLogService.Write("launchwrapper checked");
+
                 MinecraftRuntimeInfo runtimeInfo = _minecraftRuntimeResolverService.Resolve(
                     result.MinecraftDirectoryInfo,
                     SelectedVersion);
@@ -860,7 +977,9 @@ namespace CarbonLauncher.ViewModels
                     result.ClientJarInfo,
                     SelectedVersion,
                     result.LaunchSession,
-                    result.MinecraftRuntimeInfo);
+                    result.MinecraftRuntimeInfo,
+                    result.CarbonTweakerInfo,
+                    result.LaunchWrapperInfo);
 
                 _startupLogService.Write("startup diagnostics completed");
             }
@@ -877,6 +996,8 @@ namespace CarbonLauncher.ViewModels
             CurrentJava = result.JavaInfo;
             CurrentMinecraftDirectory = result.MinecraftDirectoryInfo;
             CurrentClientJar = result.ClientJarInfo;
+            CurrentCarbonTweaker = result.CarbonTweakerInfo;
+            CurrentLaunchWrapper = result.LaunchWrapperInfo;
             CurrentMinecraftRuntime = result.MinecraftRuntimeInfo;
             CurrentLaunchProfile = result.LaunchProfile;
             CurrentLaunchValidation = result.LaunchValidation;
@@ -1024,12 +1145,23 @@ namespace CarbonLauncher.ViewModels
                 OnPropertyChanged(nameof(MinecraftDirectory));
             }
 
+            RefreshLaunchWrapper();
             RefreshLaunchProfile();
         }
 
         private void RefreshClientJar()
         {
             CurrentClientJar = _clientJarResolverService.Resolve(SelectedVersion);
+        }
+
+        private void RefreshCarbonTweaker()
+        {
+            CurrentCarbonTweaker = _carbonTweakerManifestService.Read(CurrentClientJar);
+        }
+
+        private void RefreshLaunchWrapper()
+        {
+            CurrentLaunchWrapper = _launchWrapperResolverService.Resolve(CurrentCarbonTweaker, CurrentMinecraftDirectory);
         }
 
         private void RefreshMinecraftRuntime()
@@ -1119,7 +1251,9 @@ namespace CarbonLauncher.ViewModels
                 CurrentClientJar,
                 SelectedVersion,
                 CurrentLaunchSession,
-                CurrentMinecraftRuntime);
+                CurrentMinecraftRuntime,
+                CurrentCarbonTweaker,
+                CurrentLaunchWrapper);
 
             CurrentLaunchCommand = command;
         }
@@ -1294,6 +1428,14 @@ namespace CarbonLauncher.ViewModels
                 Status = "Missing",
                 ErrorMessage = "Client jar has not been checked yet."
             };
+
+            public CarbonTweakerInfo CarbonTweakerInfo { get; set; } = new CarbonTweakerInfo
+            {
+                Status = "MissingJar",
+                ErrorMessage = "Carbon tweaker manifest has not been checked yet."
+            };
+
+            public LaunchWrapperInfo LaunchWrapperInfo { get; set; } = new LaunchWrapperInfo();
 
             public MinecraftRuntimeInfo MinecraftRuntimeInfo { get; set; } = new MinecraftRuntimeInfo();
 
